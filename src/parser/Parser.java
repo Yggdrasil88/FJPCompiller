@@ -8,7 +8,7 @@ public class Parser {
 	private static final String KEY_WORDS_STANDALONE[] = new String[]{"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
 		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "AND", "OR", 
 		"+", "-", "*", "/", "?", ":"};
-	private static final String KEY_WORDS_MIDDLE[] = new String[]{"(", ")", "!", ".", ",", ";", "==", "=", "<>", "<", ">", "<=", ">=", "AND", "OR", 
+	private static final String KEY_WORDS_MIDDLE[] = new String[]{"(", ")", "!", ".", ",", ";", "==", "=", "<>", "<", ">", "<=", ">=", 
 		"+", "-", "*", "/", "?", ":"};
 
 	private String getInput() {
