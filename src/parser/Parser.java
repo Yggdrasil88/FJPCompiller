@@ -1,12 +1,67 @@
 package parser;
 
+
 public class Parser {
-	private String input;
+	private String word;	//Pomocny buffer pro aktualne nacitane slovo
+	private String input;	//Aktualni vstup - klicove slovo nebo retezec
+	
+	private static final String KEY_WORDS_STANDALONE[] = new String[]{"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
+		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "AND", "OR", 
+		"+", "-", "*", "/", "?", ":"};
+	private static final String KEY_WORDS_MIDDLE[] = new String[]{"(", ")", "!", ".", ",", ";", "==", "=", "<>", "<", ">", "<=", ">=", "AND", "OR", 
+		"+", "-", "*", "/", "?", ":"};
 
 	private String getInput() {
-		String oldInput = input;
-		input = "input";	//TODO load from input
+		String oldInput = input; //Aktualni vstup, bude vracen
+		
+		String inputStream = "xxx";	//Vstup. proud s textem
+		if (word == null) {
+			word = "xxx"; //Pomocny buffer se vstupnim slovem - vyraz oddeleny mezerami ziskany ze vstupniho proudu
+		}
+		
+		if (equals(KEY_WORDS_STANDALONE, word)) {	//Test, jestli je vyraz klicove slovo
+			input = word;		//Pokud ano, stane se novym vstupem
+			word = null;
+		} else {
+			String splitter = contains(KEY_WORDS_MIDDLE, word);
+			if (splitter != null) { //Test, jestli je cast vyrazu klicove slovo (napr. !(a+b) ), je vracen klicovy vyraz, jinak null
+				int index = splitter.indexOf(splitter);
+				if (index == 0) {	//Klicove slovo zacina od prvniho znaku
+					input = splitter;	//Vstupem je klicovy vyraz
+					word = word.substring(splitter.length() - 1, word.length());	//Oddelime a zbytek vyrazu ponechame na pozdeji
+				} else {	//Klicove slovo je v textu az dale
+					input = word.substring(0, index + 1);	//Text pred klicovym slovem pouzijeme
+					word = word.substring(index); //Klicove slovo a vse za nim ponechame na pozdeji
+				}
+			} else {	//Zadna cast vyrazu neni klicove slovo, nacteme cely vyraz
+				input = word;
+				word = null;
+			}	
+		}
 		return oldInput;
+	}
+	
+	private boolean equals(String array[], String word) {
+		for (int i = 0; i < array.length; i++) {
+			if (array[i].equals(word)) return true;
+		}
+		return false;
+	}
+	
+	private String contains(String array[], String word) {
+		/*
+		 * Tohle by MELO prochazet slovo od zacatku a pro kazdy znak(znaky) zkouset, jestli se shoduji s necim ze zadaneho pole 
+		 * (pocet zkousenych znaku je dan velikosti momentalne kontrolovaneho vyrazu z pole)
+		 * Vratit by to melo symbol z pole, ktery je v danem slove nejblize zacatku, je potreba dat pozor na poradi znaku v poli (= vs == => == musi byt prvni)
+		 */
+		for (int i = 0; i < word.length(); i++) {
+			for (int j = 0; j < array.length; j++) {
+				if (i + array[j].length() <= word.length()) {
+					if (word.substring(i, i + array[j].length()).equals(array[j])) return array[j];
+				}
+			}
+		}
+		return null;
 	}
 
 	private boolean expect(String string) {
@@ -136,7 +191,8 @@ public class Parser {
 	}
 
 	public void podminka() {
-		if (accept("!(")) {
+		if (accept("!")) {
+			expect("(");
 			podminka();
 			expect(")");
 		} else {
