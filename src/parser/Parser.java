@@ -46,14 +46,14 @@ public class Parser {
 	public void blok() {
 		if (accept("const")) {
 			defineConst();
-			while(expect(",")) {
+			while(accept(",")) {
 				defineConst();
 			}
 			expect(";");
 		}
 		if(accept("var")) {
 			String jmenoPromenne = getInput();
-			while(expect(",")) {
+			while(accept(",")) {
 				jmenoPromenne = getInput();
 			}
 			expect(";");
@@ -166,7 +166,7 @@ public class Parser {
 	public void term() {
 		faktor();
 		String array[] = new String[] {"*", "/"};
-		while(expect(array)) {
+		while(accept(array)) {
 			faktor();
 		}
 	}
