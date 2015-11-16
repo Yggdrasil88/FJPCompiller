@@ -1,210 +1,145 @@
 package parser;
 
+import java.util.Arrays;
+import java.util.List;
 
 public class Parser {
-	private String word;	//Pomocny buffer pro aktualne nacitane slovo
-	private String input;	//Aktualni vstup - klicove slovo nebo retezec
-	
-	private static final String KEY_WORDS_STANDALONE[] = new String[]{"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
-		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "AND", "OR", 
-		"+", "-", "*", "/", "?", ":"};
-	private static final String KEY_WORDS_MIDDLE[] = new String[]{"(", ")", "!", ".", ",", ";", "==", "=", "<>", "<", ">", "<=", ">=", 
-		"+", "-", "*", "/", "?", ":"};
+	private List<Token> inputTokens;
+	private Token input;
+	private int pivot;
+	private Node root;
 
-	private String getInput() {
-		String oldInput = input; //Aktualni vstup, bude vracen
-		
-		String inputStream = "xxx";	//Vstup. proud s textem
-		if (word == null) {
-			word = "xxx"; //Pomocny buffer se vstupnim slovem - vyraz oddeleny mezerami ziskany ze vstupniho proudu
-		}
-		
-		if (equals(KEY_WORDS_STANDALONE, word)) {	//Test, jestli je vyraz klicove slovo
-			input = word;		//Pokud ano, stane se novym vstupem
-			word = null;
-		} else {
-			String splitter = contains(KEY_WORDS_MIDDLE, word);
-			if (splitter != null) { //Test, jestli je cast vyrazu klicove slovo (napr. !(a+b) ), je vracen klicovy vyraz, jinak null
-				int index = splitter.indexOf(splitter);
-				if (index == 0) {	//Klicove slovo zacina od prvniho znaku
-					input = splitter;	//Vstupem je klicovy vyraz
-					word = word.substring(splitter.length() - 1, word.length());	//Oddelime a zbytek vyrazu ponechame na pozdeji
-				} else {	//Klicove slovo je v textu az dale
-					input = word.substring(0, index + 1);	//Text pred klicovym slovem pouzijeme
-					word = word.substring(index); //Klicove slovo a vse za nim ponechame na pozdeji
-				}
-			} else {	//Zadna cast vyrazu neni klicove slovo, nacteme cely vyraz
-				input = word;
-				word = null;
-			}	
-		}
-		return oldInput;
-	}
-	
-	private boolean equals(String array[], String word) {
-		for (int i = 0; i < array.length; i++) {
-			if (array[i].equals(word)) return true;
-		}
-		return false;
-	}
-	
-	private String contains(String array[], String word) {
-		/*
-		 * Tohle by MELO prochazet slovo od zacatku a pro kazdy znak(znaky) zkouset, jestli se shoduji s necim ze zadaneho pole 
-		 * (pocet zkousenych znaku je dan velikosti momentalne kontrolovaneho vyrazu z pole)
-		 * Vratit by to melo symbol z pole, ktery je v danem slove nejblize zacatku, je potreba dat pozor na poradi znaku v poli (= vs == => == musi byt prvni)
-		 */
-		for (int i = 0; i < word.length(); i++) {
-			for (int j = 0; j < array.length; j++) {
-				if (i + array[j].length() <= word.length()) {
-					if (word.substring(i, i + array[j].length()).equals(array[j])) return array[j];
-				}
-			}
-		}
-		return null;
-	}
-
-	private boolean expect(String string) {
-		if(accept(string)) return true;
-		System.out.println("Chyba");
-		return false;
-	}
-
-	private boolean expect(String array[]) {
-		if(accept(array)) return true;
-		System.out.println("Chyba");
-		return false;
-	}
-
-	private boolean accept(String string) {
-		boolean result = (string == input);
-		if (result) getInput();
-		return result;
-	}
-
-	private boolean accept(String array[]) {
-		boolean result = false;
-		int i = 0;
-		while (i < array.length && !result) {
-			result = array[i++].equals(input);
-		}
-		if (result) getInput();
-		return result;
+	public Node parse(List<Token> tokens) {
+		pivot = 0;
+		input = null;
+		inputTokens = tokens;
+		program();
+		return root;
 	}
 
 	public void program() {
+		System.out.println("program");
+		/*
+		 * TODO
+		 * generovani stromu
+		 */
+		
 		getInput();
 		blok();
-		expect(".");
+		expect("DOT");
 	}
 
 	public void blok() {
-		if (accept("const")) {
+		System.out.println("blok");
+		if (accept("CONST")) {
 			defineConst();
-			while(accept(",")) {
+			while(accept("COMMA")) {
 				defineConst();
 			}
-			expect(";");
+			expect("SEMI");
 		}
-		if(accept("var")) {
-			String jmenoPromenne = getInput();
-			while(accept(",")) {
+		if(accept("VAR")) {
+			Token jmenoPromenne = getInput();
+			while(accept("COMMA")) {
 				jmenoPromenne = getInput();
 			}
-			expect(";");
+			expect("SEMI");
 		}
-		while(accept("procedure")) {
-			String jmenoMetody = getInput();
-			expect("(");
+		while(accept("PROC")) {
+			Token jmenoMetody = getInput();
+			expect("LBRAC");
 
-			if(!input.equals(")")) {
-				String argument = getInput();
-				while(accept(",")) {
+			if(!input.equals("RBRAC")) {
+				Token argument = getInput();
+				while(accept("COMMA")) {
 					argument = getInput();
 				}
 			}
 
-			expect(")");
+			expect("RBRAC");
 			blok();
 		}
 		prikaz();
-		expect("return");	//Zmena gramatiky "return" [vyraz] => "return" cislo
-		int returnValue = Integer.parseInt(getInput());
+		expect("RETURN");	//Zmena gramatiky "return" [vyraz] => "return" cislo
+		Token returnValue = getInput();
 	}
 
 	private void prikaz() {
-		String vstup = getInput();
-		switch (vstup) {
-		case "call":
-			String jmenoFce = getInput();
-			expect("(");
+		System.out.println("prikaz");
+		Token vstup = getInput();
+		switch (vstup.getToken()) {
+		case "CALL":
+			Token jmenoFce = getInput();
+			expect("LBRAC");
 			if(isNextNumber()) {
-				int argument = Integer.parseInt(getInput());
-				while(accept(",")) {
-					argument = Integer.parseInt(getInput());
+				Token argument = getInput();
+				while(accept("COMMA")) {
+					argument = getInput();
 				}
 			}
-			expect(")");
+			expect("RBRAC");
 			break;
-		case "begin":
+		case "BEGIN":
 			prikaz();
-			while(accept(";")) {
+			while(accept("SEMI")) {
 				prikaz();
 			}
-			expect("end");
+			expect("END");
 			break;
-		case "if":
+		case "IF":
 			podminka();
-			expect("then");
+			expect("THEN");
 			prikaz();
-			if(accept("else")) {
+			if(accept("ELSE")) {
 				prikaz();
 			}
 			break;
-		case "while":
+		case "WHILE":
 			podminka();
-			expect("do");
+			expect("DO");
 			prikaz();
 			break;
-		case "do":
+		case "DO":
 			prikaz();
-			expect("while");
+			expect("WHILE");
 			podminka();
 			break;
-		case "switch":
+		case "SWITCH":
 			vyraz();
 			oneCase();
-			while(accept(";")) {
+			while(accept("SEMI")) {
 				oneCase();
 			}
 			break;
 		default:
-			String promenna = input;
-			expect("=");
+			Token promenna = input;
+			expect("ASSIGN");
 			while(!isNextNumber()) {	//Zmena gramatiky {identifikator "="} vyraz => {identifikator "="} cislo
 				promenna = getInput();
-				expect("=");
+				expect("ASSIGN");
 			}
-			int cislo = Integer.parseInt(getInput());
+			Token cislo = getInput();
 			break;
 		}
 	}
 
 	public void podminka() {
-		if (accept("!")) {
-			expect("(");
+		System.out.println("podminka");
+		if (accept("EXCL")) {
+			expect("LBRAC");
 			podminka();
-			expect(")");
+			expect("RBRAC");
 		} else {
 			vyraz();
-			String array[] = new String[] {"==", "<>", "<", ">", "<=", ">=", "AND", "OR"};
+			String array[] = new String[] {"EQUAL", "DIFF", "LT", "GT", "LET", "GET", "AND", "OR"};
 			expect(array);
 			vyraz();
 		}
 	}
 
 	public void vyraz() {
-		String array[] = new String[] {"+", "-"};
+		System.out.println("vyraz");
+		String array[] = new String[] {"PLUS", "MINUS"};
 		if(accept(array)) {		//Zmena gramatiky ["+" | "-" | e] term => ("+" | "-") term
 			term();
 			while(accept(array)) {
@@ -212,72 +147,105 @@ public class Parser {
 			}
 		} else {
 			podminka();
-			expect("?");
+			expect("QUEST");
 			vyraz();
-			expect(":");
+			expect("COLON");
 			vyraz();
 		}
 	}
 
 	public void term() {
+		System.out.println("term");
 		faktor();
-		String array[] = new String[] {"*", "/"};
+		String array[] = new String[] {"TIMES", "DIVIDE"};
 		while(accept(array)) {
 			faktor();
 		}
 	}
 
 	public void faktor() {
+		System.out.println("faktor");
 		if (isNextNumber()) {
-			int cislo = Integer.parseInt(getInput());
+			Token cislo = getInput();
 		} else {
-			String vstup = getInput();
-			switch (vstup) {
-			case "call": 
-				String jmenoFce = getInput();
-				expect("(");
+			Token vstup = getInput();
+			switch (vstup.getToken()) {
+			case "CALL": 
+				Token jmenoFce = getInput();
+				expect("LBRAC");
 				if(isNextNumber()) {
-					int argument = Integer.parseInt(getInput());
-					while(accept(",")) {
-						argument = Integer.parseInt(getInput());
+					Token argument = getInput();
+					while(accept("COMMA")) {
+						argument = getInput();
 					}
 				}
-				expect(")");
+				expect("RBRAC");
 				break;
-			case "(":
+			case "LBRAC":
 				vyraz();
-				expect(")");
+				expect("RBRAC");
 			default:
-				String promenna = input;
+				Token promenna = input;
 			}
 		}
 	}
 
 	public void oneCase() {
-		expect("case");
-		int cislo = Integer.parseInt(getInput());
-		expect(":");
+		expect("CASE");
+		Token cislo = getInput();
+		expect("COLON");
 		prikaz();
 	}
 
 	public void defineConst() {
-		String jmenoKonstanty = getInput();
-		expect("=");
+		Token jmenoKonstanty = getInput();
+		expect("ASSIGN");
 		while (!isNextNumber()) {
 			jmenoKonstanty = input;
 			getInput();
-			expect("=");
+			expect("ASSIGN");
 		}
-		int cislo = Integer.parseInt(getInput());
+		Token cislo = getInput();
 	}
 
 	public boolean isNextNumber() {
-		try {
-			Integer.parseInt(input.substring(0, 1));
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
+		return input.getToken().equals("INT");
+	}
+	
+	public Token getInput() {
+		Token oldInput = input;
+		input = inputTokens.get(pivot);
+		if (pivot < inputTokens.size() - 1) pivot++;
+		
+		System.out.println("   " + input.getToken());
+		return oldInput;
 	}
 
+	private boolean expect(String token) {
+		if(accept(token)) return true;
+		System.out.println("Chybny vstup: " + token);
+		return false;
+	}
+
+	private boolean expect(String tokens[]) {
+		if(accept(tokens)) return true;
+		System.out.println("Chybny vstup: " + Arrays.toString(tokens));
+		return false;
+	}
+
+	private boolean accept(String token) {
+		boolean result = (input.getToken().equals(token));
+		if (result) getInput();
+		return result;
+	}
+
+	private boolean accept(String tokens[]) {
+		boolean result = false;
+		int i = 0;
+		while (i < tokens.length && !result) {
+			result = tokens[i++].equals(input);
+		}
+		if (result) getInput();
+		return result;
+	}
 }
