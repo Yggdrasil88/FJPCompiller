@@ -57,6 +57,8 @@ public class Token {
 
 	public static Token createToken(String lexem, String[] tokenStrings) {
 		try {	//is number?
+			if(lexem.substring(0, 1).equals("-")) 
+				new Token(lexem, Token.INT); //negativni cislo
 			Integer.parseInt(lexem.substring(0, 1));
 			return new Token(lexem, Token.INT);
 		} catch (NumberFormatException e) {
