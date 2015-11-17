@@ -6,42 +6,50 @@ import java.util.List;
 
 import org.StructureGraphic.v1.DSTreeNode;
 
-public class Node implements DSTreeNode {
+public class TokenNode implements DSTreeNode {
 	private Token token;
-	private Node parent;
-	private List<Node> childs;
+	private TokenNode parent;
+	private List<TokenNode> childs;
 	
-	public Node() {
+	public TokenNode() {
 		this(null, null);
 	}
 	
-	public Node(Token token) {
+	public TokenNode(Token token) {
 		this(token, null);
 	}
 	
-	public Node(Token token, Node parent) {
+	public TokenNode(Token token, TokenNode parent) {
 		this.token = token;
 		this.parent = parent;
 		childs = new ArrayList<>();
 	}
 	
-	public Node addChild(Token token) {
-		Node child = new Node(token, this);
+	public TokenNode addChild(Token token) {
+		TokenNode child = new TokenNode(token, this);
 		this.childs.add(child);
 		return child;
 	}
 	
-	public Node addChild(Node n) {
+	public TokenNode addChild(TokenNode n) {
 		this.childs.add(n);
 		n.setParent(this);
 		return n;
 	}
+	
+	public TokenNode getChild(int index) {
+		return this.childs.get(index);
+	}
+	
+	public int childCount() {
+		return this.childs.size();
+	}
 
-	public void setParent(Node parent) {
+	public void setParent(TokenNode parent) {
 		this.parent = parent;
 	}
 
-	public Node getParent() {
+	public TokenNode getParent() {
 		return this.parent;
 	}
 	

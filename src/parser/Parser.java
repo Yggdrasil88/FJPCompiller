@@ -1,6 +1,5 @@
 package parser;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class Parser {
@@ -8,15 +7,15 @@ public class Parser {
 	private Token input;
 	private Token oldInput;
 	private int pivot;
-	private Node root;
-	private Node node;
+	private TokenNode root;
+	private TokenNode node;
 
-	public Node parse(List<Token> tokens) {
+	public TokenNode parse(List<Token> tokens) {
 		pivot = 0;
 		input = null;
 		oldInput = input;
 		inputTokens = tokens;
-		root = new Node();
+		root = new TokenNode();
 		node = root;
 
 		program();
@@ -191,7 +190,7 @@ public class Parser {
 			 *     c   3
 			 */
 			Token promenna = oldInput;
-			Node vrchol = node;
+			TokenNode vrchol = node;
 			expect(Token.ASSIGN);
 			node = node.addChild(oldInput);
 			node.addChild(promenna);
@@ -207,15 +206,15 @@ public class Parser {
 		}
 	}
 
-	public Node podminka() {
-		Node podminka = null;
+	public TokenNode podminka() {
+		TokenNode podminka = null;
 		if (accept(Token.EXCL)) {
 			/*
 			 * Vrchol vykricnik, pod nim podminka
 			 *  !
 			 * pom()
 			 */
-			podminka = new Node(oldInput);
+			podminka = new TokenNode(oldInput);
 			expect(Token.LBRAC);
 			podminka.addChild(podminka());
 			expect(Token.RBRAC);
@@ -226,28 +225,28 @@ public class Parser {
 			 * a   >
 			 *   b   c
 			 */
-			Node leva = vyraz();
+			TokenNode leva = vyraz();
 			int array[] = new int[] {Token.EQUAL, Token.DIFF, Token.LT, Token.GT, Token.LET, Token.GET, Token.AND, Token.OR};
 			expect(array);
-			podminka = new Node(oldInput);
-			Node prava = vyraz();
+			podminka = new TokenNode(oldInput);
+			TokenNode prava = vyraz();
 			podminka.addChild(leva);
 			podminka.addChild(prava);
 		}
 		return podminka;
 	}
 
-	public Node vyraz() {
-		Node vyraz = null; 
+	public TokenNode vyraz() {
+		TokenNode vyraz = null; 
 		if(accept(Token.QUEST)) {
 			/*
 			 * Vrchol otaznik, vlevo true, vpravo false
 			 *        ?
 			 * a > b  3   5
 			 */
-			Node podm = podminka();
+			TokenNode podm = podminka();
 			expect(Token.QUEST);
-			vyraz = new Node(oldInput);
+			vyraz = new TokenNode(oldInput);
 			vyraz.addChild(podm);
 			vyraz.addChild(vyraz());
 			expect(Token.COLON);
@@ -262,12 +261,12 @@ public class Parser {
 			 *       term1       -
 			 *             term2   term3
 			 */
-			Node vrchol = null;
-			Node leva = term();
+			TokenNode vrchol = null;
+			TokenNode leva = term();
 			int array[] = new int[] {Token.PLUS, Token.MINUS};
 			while(accept(array)) {
 				if(vyraz == null) {
-					vyraz = new Node(oldInput);
+					vyraz = new TokenNode(oldInput);
 					vrchol = vyraz;
 				}
 				else vyraz = vyraz.addChild(oldInput);
@@ -284,7 +283,7 @@ public class Parser {
 		return vyraz;
 	}
 
-	public Node term() {
+	public TokenNode term() {
 		/*
 		 * Vrchol cislo, nebo znamenko a vlevo cislo a vpravo dalsi znamenka a cisla
 		 * a * b / c =>
@@ -292,13 +291,13 @@ public class Parser {
 		 * a     /
 		 *     b   c
 		 */
-		Node vrchol = null;
-		Node term = null;
-		Node leva = faktor();
+		TokenNode vrchol = null;
+		TokenNode term = null;
+		TokenNode leva = faktor();
 		int array[] = new int[] {Token.TIMES, Token.DIVIDE};
 		while(accept(array)) {
 			if(term == null) {
-				term = new Node(oldInput);
+				term = new TokenNode(oldInput);
 				vrchol = term;
 			}
 			else term = term.addChild(oldInput);
@@ -314,8 +313,8 @@ public class Parser {
 		return term;
 	}
 
-	public Node faktor() {
-		Node faktor = null;
+	public TokenNode faktor() {
+		TokenNode faktor = null;
 		if (input.getToken() == Token.MINUS) {
 			/*
 			 * Minus cislo
@@ -323,14 +322,14 @@ public class Parser {
 			getInput();
 			Token cislo = getInput();
 			cislo.minusNumber();
-			faktor = new Node(cislo);
+			faktor = new TokenNode(cislo);
 		}
 		else if (isNextNumber()) {
 			/*
 			 * Jen cislo
 			 */
 			Token cislo = getInput();
-			faktor = new Node(cislo);
+			faktor = new TokenNode(cislo);
 		} else {
 			Token vstup = getInput();
 			switch (vstup.getToken()) {
@@ -340,7 +339,7 @@ public class Parser {
 				 *     call
 				 * fce   1   3
 				 */
-				faktor = new Node(vstup);
+				faktor = new TokenNode(vstup);
 				Token jmenoFce = getInput();
 				faktor.addChild(jmenoFce);
 				expect(Token.LBRAC);
@@ -363,7 +362,7 @@ public class Parser {
 				/*
 				 * Vracime jmeno promenne
 				 */
-				faktor = new Node(vstup);
+				faktor = new TokenNode(vstup);
 			}
 		}
 		return faktor;
@@ -391,7 +390,7 @@ public class Parser {
 		 * a     =
 		 *     c   5
 		 */
-		Node konstanta = node;
+		TokenNode konstanta = node;
 		Token jmenoKonstanty = getInput();
 		expect(Token.ASSIGN);
 		node = node.addChild(oldInput);
@@ -421,13 +420,13 @@ public class Parser {
 
 	private boolean expect(int token) {
 		if(accept(token)) return true;
-		System.out.println("Chybny vstup: " + token);
+		ErrorHandler.parserError(token);
 		return false;
 	}
 
 	private boolean expect(int tokens[]) {
 		if(accept(tokens)) return true;
-		System.out.println("Chybny vstup: " + Arrays.toString(tokens));
+		ErrorHandler.parserError(tokens);
 		return false;
 	}
 
