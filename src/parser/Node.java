@@ -48,6 +48,11 @@ public class Node implements DSTreeNode {
 	public Token getToken() {
 		return this.token;
 	}
+	
+	@Override
+	public String toString() {
+		return this.token.toString();
+	}
 
 	/*
 	 * Metody pro vizualizaci

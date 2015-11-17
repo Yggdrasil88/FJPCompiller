@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Scanner {
 	private static final String KEYWORDS[] = new String[]{"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
-		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "AND", "OR", 
+		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "and", "or", 
 		"+", "-", "*", "/", "?", ":"};
 	private static final String KEYWORDS_MIDDLE[] = new String[]{"(", ")", "!", ".", ",", ";", "==", "=", "<>", "<", ">", "<=", ">=", 
 		"+", "-", "*", "/", "?", ":"};

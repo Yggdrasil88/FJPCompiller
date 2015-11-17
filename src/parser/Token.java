@@ -39,16 +39,16 @@ public class Token {
 	public static final int IDENT = 35;
 	public static final int INT = 36;
 	
-	private final String LEXEM;
+	private String lexem;
 	private final int TOKEN;
 
 	public Token(String lexem, int token) {
-		this.LEXEM = lexem;
+		this.lexem = lexem;
 		this.TOKEN = token;
 	}
 
 	public String getLexem() {
-		return LEXEM;
+		return lexem;
 	}
 	
 	public int getToken() {
@@ -57,8 +57,6 @@ public class Token {
 
 	public static Token createToken(String lexem, String[] tokenStrings) {
 		try {	//is number?
-			if(lexem.substring(0, 1).equals("-")) 
-				new Token(lexem, Token.INT); //negativni cislo
 			Integer.parseInt(lexem.substring(0, 1));
 			return new Token(lexem, Token.INT);
 		} catch (NumberFormatException e) {
@@ -79,8 +77,14 @@ public class Token {
 		return token;
 	}
 	
+	public void minusNumber() {
+		if (this.TOKEN == Token.INT) {
+			this.lexem = "-" + this.lexem;
+		}
+	}
+	
 	@Override
 	public String toString() {
-		return "Lexem: " + this.LEXEM/* + ", Token: " + this.TOKEN + ";"*/;
+		return "Lexem: " + this.lexem/* + ", Token: " + this.TOKEN + ";"*/;
 	}
 }
