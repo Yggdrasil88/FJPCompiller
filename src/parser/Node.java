@@ -1,9 +1,12 @@
 package parser;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Node {
+import org.StructureGraphic.v1.DSTreeNode;
+
+public class Node implements DSTreeNode {
 	private Token token;
 	private Node parent;
 	private List<Node> childs;
@@ -43,6 +46,30 @@ public class Node {
 	}
 	
 	public Token getToken() {
+		return this.token;
+	}
+
+	/*
+	 * Metody pro vizualizaci
+	 * prilinkovat knihovnu z https://code.google.com/p/structure-graphic/
+	 */
+	
+	@Override
+	public DSTreeNode[] DSgetChildren() {
+		DSTreeNode[] kids = childs.toArray(new DSTreeNode[childs.size()]);
+		return kids;
+	}
+
+	@Override
+	public Color DSgetColor() {
+		if (this.token == null) return Color.RED;
+		if (this.token.getToken() == Token.INT) return Color.BLUE;
+		if (this.token.getToken() == Token.IDENT) return Color.GREEN;
+		return Color.BLACK;
+	}
+
+	@Override
+	public Object DSgetValue() {
 		return this.token;
 	}
 }

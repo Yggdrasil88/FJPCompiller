@@ -18,20 +18,17 @@ public class Parser {
 		inputTokens = tokens;
 		root = new Node();
 		node = root;
-		
+
 		program();
 		return root;
 	}
 
 	public void program() {
-		System.out.println("program");
 		getInput();
 		blok();
-		expect(Token.DOT);
 	}
 
 	public void blok() {
-		System.out.println("blok");
 		if (accept(Token.CONST)) {
 			/* Vrchol const, vetve prirazeni
 			 *        const 
@@ -74,31 +71,31 @@ public class Parser {
 			node = node.addChild(jmenoMetody);
 			expect(Token.LBRAC);
 
-			if(!input.equals(Token.RBRAC)) {
+			if(!accept(Token.RBRAC)) {
 				Token argument = getInput();
 				node.addChild(argument);
 				while(accept(Token.COMMA)) {
 					argument = getInput();
 					node.addChild(argument);
 				}
+				expect(Token.RBRAC);
 			}
 			node = node.getParent();
-			expect(Token.RBRAC);
+			//expect(Token.RBRAC);
 			blok();
 			node = node.getParent();
 		}
 		prikaz();
-		expect(Token.RETURN);	//Zmena gramatiky "return" [vyraz] => "return" [vyraz];
+		expect(Token.RETURN);	//Zmena gramatiky "return" [vyraz] => "return" [vyraz] ";"
 		node = node.addChild(oldInput);
 		if(!accept(Token.SEMI)) {
-			Token returnValue = getInput();
-			node.addChild(returnValue);
+			node.addChild(vyraz());
+			expect(Token.SEMI);
 		}
 		node = node.getParent();
 	}
 
 	private void prikaz() {
-		System.out.println("prikaz");
 		Token vstup = getInput();
 		switch (vstup.getToken()) {
 		case Token.CALL:
@@ -111,15 +108,13 @@ public class Parser {
 			Token jmenoFce = getInput();
 			node.addChild(jmenoFce);
 			expect(Token.LBRAC);
-			if(isNextNumber()) {
-				Token argument = getInput();
-				node.addChild(argument);
+			if(!accept(Token.RBRAC)) {
+				node.addChild(vyraz());
 				while(accept(Token.COMMA)) {
-					argument = getInput();
-					node.addChild(argument);
+					node.addChild(vyraz());
 				}
+				expect(Token.RBRAC);
 			}
-			expect(Token.RBRAC);
 			node = node.getParent();
 			break;
 		case Token.BEGIN:
@@ -201,24 +196,24 @@ public class Parser {
 			 * b      8
 			 * 3
 			 */
-			Token promenna = input;
+			Token promenna = oldInput;
 			Node vrchol = node;
-			node = node.addChild(promenna);
 			expect(Token.ASSIGN);
-			while(!isNextNumber()) {	//Zmena gramatiky {identifikator "="} vyraz => {identifikator "="} cislo
+			node = node.addChild(oldInput);
+			node.addChild(promenna);
+			while(!accept(Token.ASSIGN)) {	//Zmena gramatiky ...} vyraz => ...} "=" cislo (budou tam dve rovnika oddelena mezerou)
 				promenna = getInput();
-				node = node.addChild(promenna);
 				expect(Token.ASSIGN);
+				node = node.addChild(oldInput);
+				node.addChild(promenna);
 			}
-			Token cislo = getInput();
-			node.addChild(cislo);
+			node.addChild(vyraz());
 			node = vrchol;
 			break;
 		}
 	}
 
 	public Node podminka() {
-		System.out.println("podminka");
 		Node podminka = null;
 		if (accept(Token.EXCL)) {
 			/*
@@ -249,29 +244,8 @@ public class Parser {
 	}
 
 	public Node vyraz() {
-		System.out.println("vyraz");
-		Node vyraz = null;
-		if(isNextNumber()) {	//Zmena gramatiky ["+" | "-" | e] term ... => cislo ... ; protoze -cislo == cislo, ale nepoznam rozdil mezi term a podminkou
-			/*
-			 * Vrchol znamenko, vlevo hodnota, vpravo term nebo znamenko
-			 * 3 - term1 + term2 - term3 =>
-			 *     -
-			 * 3         +
-			 *    term1       -
-			 *          term2   term3
-			 */
-			Node leva = new Node(oldInput);
-			getInput();
-			int array[] = new int[] {Token.PLUS, Token.MINUS};
-			while(accept(array)) {
-				if(vyraz == null) vyraz = new Node(oldInput);
-				else vyraz = vyraz.addChild(oldInput);
-				vyraz.addChild(leva);
-				leva = term();
-			}
-			if(vyraz == null) vyraz = leva;
-			else vyraz.addChild(leva);
-		} else {
+		Node vyraz = null; 
+		if(accept(Token.QUEST)) {	//Zmena gramatiky podmínka "?" => "?" podmínka "?"
 			/*
 			 * Vrchol otaznik, vlevo true, vpravo false
 			 *        ?
@@ -284,6 +258,26 @@ public class Parser {
 			vyraz.addChild(vyraz());
 			expect(Token.COLON);
 			vyraz.addChild(vyraz());
+		} 
+		else {
+			/*
+			 * Vrchol znamenko, vlevo term, vpravo term nebo znamenko
+			 * term - term1 + term2 - term3 =>
+			 *         -
+			 * term         +
+			 *       term1       -
+			 *             term2   term3
+			 */
+			Node leva = term();
+			int array[] = new int[] {Token.PLUS, Token.MINUS};
+			while(accept(array)) {
+				if(vyraz == null) vyraz = new Node(oldInput);
+				else vyraz = vyraz.addChild(oldInput);
+				vyraz.addChild(leva);
+				leva = term();
+			}
+			if(vyraz == null) vyraz = leva;
+			else vyraz.addChild(leva);
 		}
 		return vyraz;
 	}
@@ -296,7 +290,6 @@ public class Parser {
 		 * a     /
 		 *     b   c
 		 */
-		System.out.println("term");
 		Node term = null;
 		Node leva = faktor();
 		int array[] = new int[] {Token.TIMES, Token.DIVIDE};
@@ -312,7 +305,6 @@ public class Parser {
 	}
 
 	public Node faktor() {
-		System.out.println("faktor");
 		Node faktor = null;
 		if (isNextNumber()) {
 			/*
@@ -333,15 +325,13 @@ public class Parser {
 				Token jmenoFce = getInput();
 				faktor.addChild(jmenoFce);
 				expect(Token.LBRAC);
-				if(isNextNumber()) {
-					Token argument = getInput();
-					faktor.addChild(argument);
+				if(!accept(Token.RBRAC)) {
+					faktor.addChild(vyraz());
 					while(accept(Token.COMMA)) {
-						argument = getInput();
-						faktor.addChild(argument);
+						faktor.addChild(vyraz());
 					}
+					expect(Token.RBRAC);
 				}
-				expect(Token.RBRAC);
 				break;
 			case Token.LBRAC:
 				/*
@@ -353,8 +343,7 @@ public class Parser {
 				/*
 				 * Vracime jmeno promenne
 				 */
-				Token promenna = input;
-				faktor = new Node(promenna);
+				faktor = new Node(vstup);
 			}
 		}
 		return faktor;
@@ -402,13 +391,11 @@ public class Parser {
 	public boolean isNextNumber() {
 		return (input.getToken() == Token.INT);
 	}
-	
+
 	public Token getInput() {
 		oldInput = input;
 		input = inputTokens.get(pivot);
 		if (pivot < inputTokens.size() - 1) pivot++;
-		
-		System.out.println("   " + input.getToken());
 		return oldInput;
 	}
 

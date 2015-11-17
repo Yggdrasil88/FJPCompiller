@@ -78,4 +78,9 @@ public class Token {
 		
 		return token;
 	}
+	
+	@Override
+	public String toString() {
+		return "Lexem: " + this.LEXEM/* + ", Token: " + this.TOKEN + ";"*/;
+	}
 }
