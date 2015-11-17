@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Scanner {
-	private static final String KEY_WORDS_STANDALONE[] = new String[]{"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
+	private static final String KEYWORDS[] = new String[]{"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
 		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "AND", "OR", 
 		"+", "-", "*", "/", "?", ":"};
-	private static final String KEY_WORDS_MIDDLE[] = new String[]{"(", ")", "!", ".", ",", ";", "==", "=", "<>", "<", ">", "<=", ">=", 
+	private static final String KEYWORDS_MIDDLE[] = new String[]{"(", ")", "!", ".", ",", ";", "==", "=", "<>", "<", ">", "<=", ">=", 
 		"+", "-", "*", "/", "?", ":"};
 
 	private String word;
@@ -24,7 +24,7 @@ public class Scanner {
 		
 		while (pivot < words.length) {
 			String nextStringToken = getNext(words);
-			tokens.add(Token.createToken(nextStringToken));
+			tokens.add(Token.createToken(nextStringToken, KEYWORDS));
 		}
 
 		return tokens;
@@ -36,12 +36,12 @@ public class Scanner {
 			word = words[pivot];
 		}
 
-		if (equals(KEY_WORDS_STANDALONE, word)) {
+		if (equals(KEYWORDS, word)) {
 			input = word;
 			word = null;
 			pivot++;
 		} else {
-			String splitter = contains(KEY_WORDS_MIDDLE, word);
+			String splitter = contains(KEYWORDS_MIDDLE, word);
 			if (splitter != null) {
 				int index = word.indexOf(splitter);
 				if (index == 0) {

@@ -6,244 +6,422 @@ import java.util.List;
 public class Parser {
 	private List<Token> inputTokens;
 	private Token input;
+	private Token oldInput;
 	private int pivot;
 	private Node root;
+	private Node node;
 
 	public Node parse(List<Token> tokens) {
 		pivot = 0;
 		input = null;
+		oldInput = input;
 		inputTokens = tokens;
+		root = new Node();
+		node = root;
+
 		program();
 		return root;
 	}
 
 	public void program() {
-		System.out.println("program");
-		/*
-		 * TODO
-		 * generovani stromu
-		 */
-		
 		getInput();
 		blok();
-		expect("DOT");
 	}
 
 	public void blok() {
-		System.out.println("blok");
-		if (accept("CONST")) {
+		if (accept(Token.CONST)) {
+			/* Vrchol const, vetve prirazeni
+			 *        const 
+			 *   =      =      = 
+			 * a   3  b   1  c   =
+			 *                 d   7
+			 */
+			node = node.addChild(oldInput);
 			defineConst();
-			while(accept("COMMA")) {
+			while(accept(Token.COMMA)) {
 				defineConst();
 			}
-			expect("SEMI");
+			expect(Token.SEMI);
+			node = node.getParent();
 		}
-		if(accept("VAR")) {
+		if(accept(Token.VAR)) {
+			/* Vrchol var, vetve identifikatory
+			 *   var 
+			 * a b c d
+			 */
+			node = node.addChild(oldInput);
 			Token jmenoPromenne = getInput();
-			while(accept("COMMA")) {
+			node.addChild(jmenoPromenne);
+			while(accept(Token.COMMA)) {
 				jmenoPromenne = getInput();
+				node.addChild(jmenoPromenne);
 			}
-			expect("SEMI");
+			expect(Token.SEMI);
+			node = node.getParent();
 		}
-		while(accept("PROC")) {
+		while(accept(Token.PROC)) {
+			/*
+			 * Vrchol proc, vlevo jmeno, pod nim argumenty, vpravo blok
+			 *        proc
+			 *   fce       blok()
+			 * a     b
+			 */
+			node = node.addChild(oldInput);
 			Token jmenoMetody = getInput();
-			expect("LBRAC");
+			node = node.addChild(jmenoMetody);
+			expect(Token.LBRAC);
 
-			if(!input.equals("RBRAC")) {
+			if(!accept(Token.RBRAC)) {
 				Token argument = getInput();
-				while(accept("COMMA")) {
+				node.addChild(argument);
+				while(accept(Token.COMMA)) {
 					argument = getInput();
+					node.addChild(argument);
 				}
+				expect(Token.RBRAC);
 			}
-
-			expect("RBRAC");
+			node = node.getParent();
+			//expect(Token.RBRAC);
 			blok();
+			node = node.getParent();
 		}
 		prikaz();
-		expect("RETURN");	//Zmena gramatiky "return" [vyraz] => "return" cislo
-		Token returnValue = getInput();
+		expect(Token.RETURN);
+		node = node.addChild(oldInput);
+		if(!accept(Token.SEMI)) {
+			node.addChild(vyraz());
+			expect(Token.SEMI);
+		}
+		node = node.getParent();
 	}
 
 	private void prikaz() {
-		System.out.println("prikaz");
 		Token vstup = getInput();
 		switch (vstup.getToken()) {
-		case "CALL":
+		case Token.CALL:
+			/*
+			 * Vrchol call, vlevo jmeno fce, vpravo argumenty
+			 *      call
+			 * fce  5  13  2
+			 */
+			node = node.addChild(vstup);
 			Token jmenoFce = getInput();
-			expect("LBRAC");
-			if(isNextNumber()) {
-				Token argument = getInput();
-				while(accept("COMMA")) {
-					argument = getInput();
+			node.addChild(jmenoFce);
+			expect(Token.LBRAC);
+			if(!accept(Token.RBRAC)) {
+				node.addChild(vyraz());
+				while(accept(Token.COMMA)) {
+					node.addChild(vyraz());
 				}
+				expect(Token.RBRAC);
 			}
-			expect("RBRAC");
+			node = node.getParent();
 			break;
-		case "BEGIN":
+		case Token.BEGIN:
+			/*
+			 * Vice prikazu v bloku
+			 */
 			prikaz();
-			while(accept("SEMI")) {
+			while(accept(Token.SEMI)) {
 				prikaz();
 			}
-			expect("END");
+			expect(Token.END);
 			break;
-		case "IF":
-			podminka();
-			expect("THEN");
+		case Token.IF:
+			/*
+			 * Vrchol if vlevo podminka, vpravo then, uplne vpravo else (pokud existuje)
+			 *        if
+			 * podm  then  (else)
+			 * 
+			 */
+			node = node.addChild(oldInput);
+			node.addChild(podminka());
+			expect(Token.THEN);
+			node = node.addChild(oldInput);
 			prikaz();
-			if(accept("ELSE")) {
+			node = node.getParent();
+			if(accept(Token.ELSE)) {
+				node = node.addChild(oldInput);
 				prikaz();
+				node = node.getParent();
 			}
+			node = node.getParent();
 			break;
-		case "WHILE":
-			podminka();
-			expect("DO");
+		case Token.WHILE:
+			/*
+			 * Vrchol while, vlevo podminka, vpravo do, pod ni prikaz
+			 *     while
+			 * podm     do
+			 *         prikaz
+			 */
+			node = node.addChild(oldInput);
+			node.addChild(podminka());
+			expect(Token.DO);
+			node = node.addChild(oldInput);
 			prikaz();
+			node = node.getParent();
+			node = node.getParent();
 			break;
-		case "DO":
+		case Token.DO:
+			/*
+			 * Vrchol DO, vlevo prikaz, vpravo while
+			 */
+			node = node.addChild(oldInput);
 			prikaz();
-			expect("WHILE");
-			podminka();
+			expect(Token.WHILE);
+			node = node.addChild(oldInput);
+			node.addChild(podminka());
+			node = node.getParent();
+			node = node.getParent();
 			break;
-		case "SWITCH":
-			vyraz();
+		case Token.SWITCH:
+			/*
+			 * Vrchol switch, vlevo vyraz, vpravo hodnoty, pod nimi prikazy
+			 *    switch
+			 * a    1      2
+			 *     prik   prik
+			 */
+			node = node.addChild(oldInput);
+			node.addChild(vyraz());
 			oneCase();
-			while(accept("SEMI")) {
+			while(accept(Token.SEMI)) {
 				oneCase();
 			}
+			node = node.getParent();
 			break;
 		default:
-			Token promenna = input;
-			expect("ASSIGN");
-			while(!isNextNumber()) {	//Zmena gramatiky {identifikator "="} vyraz => {identifikator "="} cislo
+			/*
+			 * Vrchol promenna, vetev prirazeni
+			 * a      d
+			 * b      8
+			 * 3
+			 */
+			Token promenna = oldInput;
+			Node vrchol = node;
+			expect(Token.ASSIGN);
+			node = node.addChild(oldInput);
+			node.addChild(promenna);
+			while(!accept(Token.ASSIGN)) {	//Zmena gramatiky ...} vyraz => ...} "=" cislo (budou tam dve rovnika oddelena mezerou)
 				promenna = getInput();
-				expect("ASSIGN");
+				expect(Token.ASSIGN);
+				node = node.addChild(oldInput);
+				node.addChild(promenna);
 			}
-			Token cislo = getInput();
+			node.addChild(vyraz());
+			node = vrchol;
 			break;
 		}
 	}
 
-	public void podminka() {
-		System.out.println("podminka");
-		if (accept("EXCL")) {
-			expect("LBRAC");
-			podminka();
-			expect("RBRAC");
+	public Node podminka() {
+		Node podminka = null;
+		if (accept(Token.EXCL)) {
+			/*
+			 * Vrchol vykricnik, pod nim podminka
+			 *  !
+			 * pom()
+			 */
+			podminka = new Node(oldInput);
+			expect(Token.LBRAC);
+			podminka.addChild(podminka());
+			expect(Token.RBRAC);
 		} else {
-			vyraz();
-			String array[] = new String[] {"EQUAL", "DIFF", "LT", "GT", "LET", "GET", "AND", "OR"};
+			/*
+			 * Vrchol podminka, pod nim vyrazy
+			 *   <
+			 * a   >
+			 *   b   c
+			 */
+			Node leva = vyraz();
+			int array[] = new int[] {Token.EQUAL, Token.DIFF, Token.LT, Token.GT, Token.LET, Token.GET, Token.AND, Token.OR};
 			expect(array);
-			vyraz();
+			podminka = new Node(oldInput);
+			Node prava = vyraz();
+			podminka.addChild(leva);
+			podminka.addChild(prava);
 		}
+		return podminka;
 	}
 
-	public void vyraz() {
-		System.out.println("vyraz");
-		String array[] = new String[] {"PLUS", "MINUS"};
-		if(accept(array)) {		//Zmena gramatiky ["+" | "-" | e] term => ("+" | "-") term
-			term();
+	public Node vyraz() {
+		Node vyraz = null; 
+		if(accept(Token.QUEST)) {	//Zmena gramatiky podmínka "?" => "?" podmínka "?"
+			/*
+			 * Vrchol otaznik, vlevo true, vpravo false
+			 *        ?
+			 * a > b  3   5
+			 */
+			Node podm = podminka();
+			expect(Token.QUEST);
+			vyraz = new Node(oldInput);
+			vyraz.addChild(podm);
+			vyraz.addChild(vyraz());
+			expect(Token.COLON);
+			vyraz.addChild(vyraz());
+		} 
+		else {
+			/*
+			 * Vrchol znamenko, vlevo term, vpravo term nebo znamenko
+			 * term - term1 + term2 - term3 =>
+			 *         -
+			 * term         +
+			 *       term1       -
+			 *             term2   term3
+			 */
+			Node leva = term();
+			int array[] = new int[] {Token.PLUS, Token.MINUS};
 			while(accept(array)) {
-				term();
+				if(vyraz == null) vyraz = new Node(oldInput);
+				else vyraz = vyraz.addChild(oldInput);
+				vyraz.addChild(leva);
+				leva = term();
 			}
-		} else {
-			podminka();
-			expect("QUEST");
-			vyraz();
-			expect("COLON");
-			vyraz();
+			if(vyraz == null) vyraz = leva;
+			else vyraz.addChild(leva);
 		}
+		return vyraz;
 	}
 
-	public void term() {
-		System.out.println("term");
-		faktor();
-		String array[] = new String[] {"TIMES", "DIVIDE"};
+	public Node term() {
+		/*
+		 * Vrchol cislo, nebo znamenko a vlevo cislo a vpravo dalsi znamenka a cisla
+		 * a * b / c =>
+		 *    *
+		 * a     /
+		 *     b   c
+		 */
+		Node term = null;
+		Node leva = faktor();
+		int array[] = new int[] {Token.TIMES, Token.DIVIDE};
 		while(accept(array)) {
-			faktor();
+			if(term == null) term = new Node(oldInput);
+			else term = term.addChild(oldInput);
+			term.addChild(leva);
+			leva = faktor();
 		}
+		if(term == null) term = leva;
+		else term.addChild(leva);
+		return term;
 	}
 
-	public void faktor() {
-		System.out.println("faktor");
+	public Node faktor() {
+		Node faktor = null;
 		if (isNextNumber()) {
+			/*
+			 * Jen cislo
+			 */
 			Token cislo = getInput();
+			faktor = new Node(cislo);
 		} else {
 			Token vstup = getInput();
 			switch (vstup.getToken()) {
-			case "CALL": 
+			case Token.CALL: 
+				/*
+				 * Vrchol Call, vlevo jmeno fce, vpravo parametry
+				 *     call
+				 * fce   1   3
+				 */
+				faktor = new Node(vstup);
 				Token jmenoFce = getInput();
-				expect("LBRAC");
-				if(isNextNumber()) {
-					Token argument = getInput();
-					while(accept("COMMA")) {
-						argument = getInput();
+				faktor.addChild(jmenoFce);
+				expect(Token.LBRAC);
+				if(!accept(Token.RBRAC)) {
+					faktor.addChild(vyraz());
+					while(accept(Token.COMMA)) {
+						faktor.addChild(vyraz());
 					}
+					expect(Token.RBRAC);
 				}
-				expect("RBRAC");
 				break;
-			case "LBRAC":
-				vyraz();
-				expect("RBRAC");
+			case Token.LBRAC:
+				/*
+				 * Vracime vyraz
+				 */
+				faktor = vyraz();
+				expect(Token.RBRAC);
 			default:
-				Token promenna = input;
+				/*
+				 * Vracime jmeno promenne
+				 */
+				faktor = new Node(vstup);
 			}
 		}
+		return faktor;
 	}
 
 	public void oneCase() {
-		expect("CASE");
+		/*
+		 * Vrchol cislo, pod nim prikazy
+		 *   5
+		 * prikaz
+		 */
+		expect(Token.CASE);
 		Token cislo = getInput();
-		expect("COLON");
+		node = node.addChild(cislo);
+		expect(Token.COLON);
 		prikaz();
+		node = node.getParent();
 	}
 
 	public void defineConst() {
+		/*
+		 * Vrchol prirazeni, vlevo ident, vpravo ident nebo hodnota
+		 * a = c = 5 =>
+		 *    =
+		 * a     =
+		 *     c   5
+		 */
+		Node konstanta = node;
 		Token jmenoKonstanty = getInput();
-		expect("ASSIGN");
+		expect(Token.ASSIGN);
+		node = node.addChild(oldInput);
+		node.addChild(jmenoKonstanty);
 		while (!isNextNumber()) {
 			jmenoKonstanty = input;
 			getInput();
-			expect("ASSIGN");
+			expect(Token.ASSIGN);
+			node = node.addChild(oldInput);
+			node.addChild(jmenoKonstanty);
 		}
 		Token cislo = getInput();
+		node.addChild(cislo);
+		node = konstanta;
 	}
 
 	public boolean isNextNumber() {
-		return input.getToken().equals("INT");
+		return (input.getToken() == Token.INT);
 	}
-	
+
 	public Token getInput() {
-		Token oldInput = input;
+		oldInput = input;
 		input = inputTokens.get(pivot);
 		if (pivot < inputTokens.size() - 1) pivot++;
-		
-		System.out.println("   " + input.getToken());
 		return oldInput;
 	}
 
-	private boolean expect(String token) {
+	private boolean expect(int token) {
 		if(accept(token)) return true;
 		System.out.println("Chybny vstup: " + token);
 		return false;
 	}
 
-	private boolean expect(String tokens[]) {
+	private boolean expect(int tokens[]) {
 		if(accept(tokens)) return true;
 		System.out.println("Chybny vstup: " + Arrays.toString(tokens));
 		return false;
 	}
 
-	private boolean accept(String token) {
-		boolean result = (input.getToken().equals(token));
+	private boolean accept(int token) {
+		boolean result = (input.getToken() == token);
 		if (result) getInput();
 		return result;
 	}
 
-	private boolean accept(String tokens[]) {
+	private boolean accept(int tokens[]) {
 		boolean result = false;
 		int i = 0;
 		while (i < tokens.length && !result) {
-			result = tokens[i++].equals(input);
+			result = (tokens[i++] == input.getToken());
 		}
 		if (result) getInput();
 		return result;
