@@ -86,7 +86,7 @@ public class Parser {
 			node = node.getParent();
 		}
 		prikaz();
-		expect(Token.RETURN);	//Zmena gramatiky "return" [vyraz] => "return" [vyraz] ";"
+		expect(Token.RETURN);
 		node = node.addChild(oldInput);
 		if(!accept(Token.SEMI)) {
 			node.addChild(vyraz());
