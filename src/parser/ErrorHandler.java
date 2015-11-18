@@ -35,4 +35,9 @@ public class ErrorHandler {
 		System.err.println("Metoda s nazvem " + child.getName() + " jiz existuje.");
 		System.exit(1);
 	}
+	
+	public static void varNotFound(String var) {
+		System.err.println("Promìnná s názvem " + var + " nebyla nalezena.");
+		System.exit(1);
+	}
 }

@@ -41,9 +41,25 @@ public class CodeGenerator {
 		this.blockNode = new BlockNode(null, 0, 0);
 		instructions = new ArrayList<>();
 		createBlock(0);
-
+		joinInts();
 		DSutils.show(blockNode, 500, 80);
 		return instructions;
+	}
+
+	private void joinInts() {
+		for (int i = 0; i < instructions.size() - 1; i++) {
+			if (instructions.get(i).split(" ")[0].toLowerCase().equals("int")) {
+				if (instructions.get(i + 1).split(" ")[0].toLowerCase().equals("int")) {
+					//Sloucime dva za sebou jdouci prikazy int
+					int var1 = Integer.parseInt(instructions.get(i).split(" ")[2]);
+					int var2 = Integer.parseInt(instructions.get(i + 1).split(" ")[2]);
+					instructions.remove(i);
+					instructions.remove(i);
+					instructions.add(i, PL0_Code._int(var1 + var2));
+					i--;
+				}
+			}
+		}
 	}
 
 	private void createBlock(int level) {
@@ -59,7 +75,7 @@ public class CodeGenerator {
 				blockNode.addVariable(v);
 				stackIndex++;
 			}
-			instructions.add(PL0_Code._int((pocetPromennych + PROC_RESERVE_SIZE)));
+			instructions.add(PL0_Code._int(pocetPromennych));
 			index++;
 		}
 
@@ -107,8 +123,7 @@ public class CodeGenerator {
 		}
 
 		while (tokenNode.getChild(index).getToken().getToken() != Token.RETURN) {
-			//TODO
-			//Zpracovani prikazu
+			createCommand();
 			index++;
 		}
 
@@ -124,6 +139,11 @@ public class CodeGenerator {
 		instructions.add(PL0_Code._ret());
 	}
 
+	private void createCommand() {
+		instructions.add("prikaz");
+		
+	}
+
 	private void createProc(TokenNode procNode, int level) {
 		BlockNode newProc = new BlockNode(procNode.getChild(0).getToken().getLexem(), instructions.size(), level + 1);
 		//Prepnuti kontextu
@@ -133,7 +153,7 @@ public class CodeGenerator {
 		createBlock(level + 1);
 
 		//Navrat zpet
-		tokenNode = procNode.getParent();
+		tokenNode = tokenNode.getParent();
 		blockNode = blockNode.getParent();
 	}
 

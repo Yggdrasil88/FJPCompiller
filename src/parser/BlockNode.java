@@ -23,6 +23,21 @@ public class BlockNode implements DSTreeNode {
 		this.LEVEL = level;
 	}
 	
+	public Variable getVar(String name) {
+		Variable var = null;
+		BlockNode level = this;
+		while (level.getLevel() >= 0 && var == null) {
+			for (int i = 0; i < variables.size(); i++) {
+				if (variables.get(i).getName().equals(name)) {
+					var = variables.get(i);
+					break;
+				}
+			}
+		}
+		if(var == null) ErrorHandler.varNotFound(name);
+		return var;
+	}
+	
 	public void addVariable(Variable var) {
 		if (variables.contains(var)) ErrorHandler.dupliciteVariable(var);
 		else variables.add(var);
