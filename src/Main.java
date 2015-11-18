@@ -2,7 +2,6 @@ import java.util.List;
 
 import org.StructureGraphic.v1.DSutils;
 
-import parser.BlockNode;
 import parser.CodeGenerator;
 import parser.Parser;
 import parser.Scanner;
@@ -21,26 +20,20 @@ public class Main {
 				"begin f=g=h= =6 ; call fce1(f, g, call fce2(f,g)); if a> b then c= = 5; if a<b then c= =4 else c = =-8; switch a+5 case 1:d= =1, case 2:d = = -8*4/7+56/(8+(4*8)); \n" +
 				"while a>b do c= = 4; do c= = 4 while a>4 end\n" +
 				"return 0;\n";
+		
 		Scanner sc = new Scanner();
 		List<Token> tokens = sc.analyse(text);
 		
-		for (int i = 0; i < tokens.size(); i++) {
-			System.out.print(tokens.get(i).getLexem() + " ");
-		}
-		System.out.println();
-		for (int i = 0; i < tokens.size(); i++) {
-			System.out.print(tokens.get(i).getToken() + " ");
-		}
-		System.out.println();
-		System.out.println();
-		
 		Parser pa = new Parser();
 		TokenNode n = pa.parse(tokens);
-		DSutils.show(n, 100, 30);
+		DSutils.show(n, 100, 80);
 		
 		CodeGenerator gen = new CodeGenerator();
-		BlockNode block = gen.generate(n);
-		DSutils.show(block, 500, 50);
+		List<String> instructions = gen.generate(n);
+		
+		for (int i = 0; i < instructions.size(); i++) {
+			System.out.println(i + " " + instructions.get(i));
+		}
 	}
 
 }

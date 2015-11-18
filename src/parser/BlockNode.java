@@ -11,16 +11,14 @@ public class BlockNode implements DSTreeNode {
 	private BlockNode parent;
 	private List<BlockNode> childs;
 	private List<Variable> variables;
+	private final int START_ADDR;
 	
-	public BlockNode(String name) {
+	public BlockNode(String name, int start) {
 		this.NAME = name;
 		this.parent = null;
 		this.childs = new ArrayList<>();
 		this.variables = new ArrayList<>();
-	}
-	
-	public List<Variable> getVariables() {
-		return this.variables;
+		this.START_ADDR = start;
 	}
 	
 	public void addVariable(Variable var) {
@@ -45,10 +43,6 @@ public class BlockNode implements DSTreeNode {
 	
 	public void setParent(BlockNode parent) {
 		this.parent = parent;
-	}
-	
-	public boolean isRoot() {
-		return (this.parent == null);
 	}
 	
 	@Override
@@ -82,7 +76,7 @@ public class BlockNode implements DSTreeNode {
 		for (int i = 0; i < variables.size(); i++) {
 			if (variables.get(i).isConstant()) builder.append("Const ");
 			else builder.append("Var ");
-			builder.append(variables.get(i).getName() + ": " + variables.get(i).getValue() + "; ");
+			builder.append(variables.get(i).getName() + ": " + variables.get(i).getStackAddr() + "; ");
 		}
 		return builder.toString();
 	}
