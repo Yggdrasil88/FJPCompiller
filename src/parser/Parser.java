@@ -100,18 +100,19 @@ public class Parser {
 		switch (vstup.getToken()) {
 		case Token.CALL:
 			/*
-			 * Vrchol call, vlevo jmeno fce, vpravo argumenty
-			 *      call
-			 * fce  5  13  2
+			 * Vrchol call, pod nim jmeno fce, pod nim argumenty
+			 *   call
+			 *   fce  
+			 * 5  13  2
 			 */
 			node = node.addChild(vstup);
 			Token jmenoFce = getInput();
-			node.addChild(jmenoFce);
+			TokenNode pom = node.addChild(jmenoFce);
 			expect(Token.LBRAC);
 			if(!accept(Token.RBRAC)) {
-				node.addChild(vyraz());
+				pom.addChild(vyraz());
 				while(accept(Token.COMMA)) {
-					node.addChild(vyraz());
+					pom.addChild(vyraz());
 				}
 				expect(Token.RBRAC);
 			}
@@ -335,18 +336,19 @@ public class Parser {
 			switch (vstup.getToken()) {
 			case Token.CALL: 
 				/*
-				 * Vrchol Call, vlevo jmeno fce, vpravo parametry
-				 *     call
-				 * fce   1   3
+				 * Vrchol Call, pod nim jmeno fce, pod nim argumenty
+				 *  call
+				 *  fce
+				 * 1   3
 				 */
 				faktor = new TokenNode(vstup);
 				Token jmenoFce = getInput();
-				faktor.addChild(jmenoFce);
+				TokenNode pom = faktor.addChild(jmenoFce);
 				expect(Token.LBRAC);
 				if(!accept(Token.RBRAC)) {
-					faktor.addChild(vyraz());
+					pom.addChild(vyraz());
 					while(accept(Token.COMMA)) {
-						faktor.addChild(vyraz());
+						pom.addChild(vyraz());
 					}
 					expect(Token.RBRAC);
 				}

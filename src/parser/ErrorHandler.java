@@ -40,4 +40,9 @@ public class ErrorHandler {
 		System.err.println("Promìnná s názvem " + var + " nebyla nalezena.");
 		System.exit(1);
 	}
+	
+	public static void procNotFound(String proc) {
+		System.err.println("Procedura s názvem " + proc + " nebyla nalezena.");
+		System.exit(1);
+	}
 }
