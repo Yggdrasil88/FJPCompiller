@@ -12,13 +12,15 @@ public class BlockNode implements DSTreeNode {
 	private List<BlockNode> childs;
 	private List<Variable> variables;
 	private final int START_ADDR;
+	private final int LEVEL;
 	
-	public BlockNode(String name, int start) {
+	public BlockNode(String name, int start, int level) {
 		this.NAME = name;
 		this.parent = null;
 		this.childs = new ArrayList<>();
 		this.variables = new ArrayList<>();
 		this.START_ADDR = start;
+		this.LEVEL = level;
 	}
 	
 	public void addVariable(Variable var) {
@@ -28,6 +30,14 @@ public class BlockNode implements DSTreeNode {
 	
 	public String getName() {
 		return this.NAME;
+	}
+	
+	public int getStartAddr() {
+		return this.START_ADDR;
+	}
+	
+	public int getLevel() {
+		return this.LEVEL;
 	}
 	
 	public BlockNode addChild(BlockNode child) {
@@ -73,10 +83,11 @@ public class BlockNode implements DSTreeNode {
 	@Override
 	public Object DSgetValue() {
 		StringBuilder builder = new StringBuilder();
+		if (NAME != null) builder.append(NAME + ", Level: " + LEVEL + ", Start: " + START_ADDR + "\n");
 		for (int i = 0; i < variables.size(); i++) {
 			if (variables.get(i).isConstant()) builder.append("Const ");
 			else builder.append("Var ");
-			builder.append(variables.get(i).getName() + ": " + variables.get(i).getStackAddr() + "; ");
+			builder.append(variables.get(i).getName() + ": " + variables.get(i).getStackAddr() + ",Level: " + variables.get(i).getLevel() + "; ");
 		}
 		return builder.toString();
 	}
