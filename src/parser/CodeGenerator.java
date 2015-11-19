@@ -218,15 +218,31 @@ public class CodeGenerator {
 			instructions.add(PL0_Code._opr(PL0_Code.LET));
 			break;
 		case Token.GET:
-			vyraz( tokenNode.getChild(0));
+			vyraz(tokenNode.getChild(0));
 			vyraz(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.GET));
 			break;
 		case Token.AND:
-			//TODO
+			vyraz(tokenNode.getChild(0));
+			instructions.add(PL0_Code._lit(0));
+			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
+			vyraz(tokenNode.getChild(1));
+			instructions.add(PL0_Code._lit(0));
+			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
+			instructions.add(PL0_Code._opr(PL0_Code.PLUS));
+			instructions.add(PL0_Code._lit(2));
+			instructions.add(PL0_Code._opr(PL0_Code.GET));
 			break;
 		case Token.OR:
-			//TODO 
+			vyraz(tokenNode.getChild(0));
+			instructions.add(PL0_Code._lit(0));
+			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
+			vyraz(tokenNode.getChild(1));
+			instructions.add(PL0_Code._lit(0));
+			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
+			instructions.add(PL0_Code._opr(PL0_Code.PLUS));
+			instructions.add(PL0_Code._lit(1));
+			instructions.add(PL0_Code._opr(PL0_Code.GET));
 			break;
 		case Token.EXCL: 
 			podminka(tokenNode.getChild(0));
