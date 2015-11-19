@@ -178,10 +178,25 @@ public class CodeGenerator {
 			instructions.add(PL0_Code._jpc(doAddr));
 			break;
 		case Token.SWITCH:
-			vyraz(tokenNode.getChild(0));
+			//TODO - pro kazdy case znovu vyhodnocujeme podminku - lze udelat lepe???
+			List<Integer> jmpInstructions = new ArrayList<>();
 			for (int i = 1; i < tokenNode.childCount(); i++) {
-				//TODO jpc
-				prikaz(tokenNode.getChild(i));
+				vyraz(tokenNode.getChild(0));
+				instructions.add(PL0_Code._lit(Integer.parseInt(tokenNode.getChild(i).getToken().getLexem())));
+				instructions.add(PL0_Code._opr(PL0_Code.EQUAL));
+				
+				jpcIndex = instructions.size();
+				instructions.add(PL0_Code._jpc(-1));
+				
+				prikaz(tokenNode.getChild(i).getChild(0));
+				
+				jmpInstructions.add(instructions.size());
+				instructions.add(PL0_Code._jmp(-1));
+				
+				instructions.set(jpcIndex, PL0_Code._jpc(instructions.size()));
+			}
+			for (int i = 0; i < jmpInstructions.size(); i++) {
+				instructions.set(jmpInstructions.get(i), PL0_Code._jmp(instructions.size()));
 			}
 			break;
 		case Token.ASSIGN:

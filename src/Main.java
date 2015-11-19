@@ -12,9 +12,9 @@ import parser.TokenNode;
 public class Main {
 
 	public static void main(String[] args) {
-		String text = "const a=10;\n" +
+		String text = "const a=5;\n" +
 				"var b; \n" +
-				"begin b= =?a>5? 1:4; if b>2 then b= =3 else b= =2; end \n" +
+				"begin switch a case 1:b= =10, case 5: b= =5, case 10:b= = 1; end \n" +
 				"return;";
 		
 		Scanner sc = new Scanner();
