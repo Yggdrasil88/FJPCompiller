@@ -145,27 +145,42 @@ public class CodeGenerator {
 			call(tokenNode.getChild(0));
 			break;
 		case Token.IF:
-			//TODO jmc
+			//Na vrcholu zasobniku bude vysledek
 			podminka(tokenNode.getChild(0));
+			int jpcIndex = instructions.size();
+			instructions.add(PL0_Code._jpc(-1));
 			prikaz(tokenNode.getChild(1));
+			int jmpIndex = instructions.size();
+			instructions.add(PL0_Code._jmp(-1));
+			//Zmenime skok na spravnou hodnotu
+			instructions.set(jpcIndex, PL0_Code._jpc(instructions.size()));
 			if (tokenNode.childCount() == 3) {
 				prikaz(tokenNode.getChild(2));
 			}
+			instructions.set(jmpIndex, PL0_Code._jmp(instructions.size()));
 			break;
 		case Token.WHILE:
-			//TODO jmc, jmp
+			int whileAddr = instructions.size();
 			podminka(tokenNode.getChild(0));
+			jpcIndex = instructions.size();
+			instructions.add(PL0_Code._jpc(-1));
 			prikaz(tokenNode.getChild(1));
+			instructions.add(PL0_Code._jmp(whileAddr));
+			instructions.set(jpcIndex, PL0_Code._jpc(instructions.size()));
 			break;
 		case Token.DO:
-			//TODO jmc
-			prikaz(tokenNode.getChild(1));
-			podminka(tokenNode.getChild(0));
+			int doAddr = instructions.size();
+			prikaz(tokenNode.getChild(0));
+			podminka(tokenNode.getChild(1));
+			//negace podminky
+			instructions.add(PL0_Code._lit(0));
+			instructions.add(PL0_Code._opr(PL0_Code.EQUAL));
+			instructions.add(PL0_Code._jpc(doAddr));
 			break;
 		case Token.SWITCH:
 			vyraz(tokenNode.getChild(0));
 			for (int i = 1; i < tokenNode.childCount(); i++) {
-				//TODO jmc
+				//TODO jpc
 				prikaz(tokenNode.getChild(i));
 			}
 			break;
@@ -183,6 +198,7 @@ public class CodeGenerator {
 		}
 		//Promenna do ktere prirazujeme
 		Variable var = blockNode.getVar(tokenNode.getChild(0).getToken().getLexem());
+		if (var.isConstant()) ErrorHandler.constAssign();
 		//ulozit vrchol zasobniku na nalezene misto
 		instructions.add(PL0_Code._sto(blockNode.getLevel() - var.getLevel(), var.getStackAddr()));
 		//A hned ji vratime zpet na zasobnik (Pokud uz nejsme na vrcholu)
@@ -255,10 +271,17 @@ public class CodeGenerator {
 	private void vyraz(TokenNode tokenNode) {
 		if (tokenNode.getToken().getToken() == Token.QUEST) {
 			//Na vrcholu zasobniku bude vysledek
-			//TODO jmc
 			podminka(tokenNode.getChild(0));
+			int jpcIndex = instructions.size();
+			instructions.add(PL0_Code._jpc(-1));
 			vyraz(tokenNode.getChild(1));
+			int jmpIndex = instructions.size();
+			instructions.add(PL0_Code._jmp(-1));
+			//Zmenime skok na spravnou hodnotu
+			instructions.set(jpcIndex, PL0_Code._jpc(instructions.size()));
 			vyraz(tokenNode.getChild(2));
+			//A druhy skok take
+			instructions.set(jmpIndex, PL0_Code._jmp(instructions.size()));
 		} else {
 			term(tokenNode);
 		}
@@ -337,7 +360,6 @@ public class CodeGenerator {
 		//Prepnuti kontextu
 		blockNode = blockNode.addChild(newProc);
 		tokenNode = procNode;
-		//System.out.println(tokenNode.getToken().getLexem());
 		
 		createBlock(level + 1);
 

@@ -43,8 +43,12 @@ public class PL0_Code {
 		return "JMP 0 " + addr;
 	}
 	
-	public static String _jmc(int addr) {
+	public static String _jpc(int addr) {
 		return "JMC 0 " + addr;
+		/*
+		 * TODO
+		 * V debuggeru i na portalu je chyba - spravne ma byt JPC, ale s tim nefunguje debugger
+		 */
 	}
 	
 	public static String _ret() {
