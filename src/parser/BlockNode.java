@@ -14,6 +14,7 @@ public class BlockNode implements DSTreeNode {
 	private final TokenNode TOKEN_NODE;
 	private final int START_ADDR;
 	private final int LEVEL;
+	private int argStart;
 
 	public BlockNode(String name, int start, int level, TokenNode tokenNode) {
 		this.NAME = name;
@@ -46,11 +47,15 @@ public class BlockNode implements DSTreeNode {
 		}
 		//neni - zkusime postoupit o uroven vys
 		if (this.getParent() == null) ErrorHandler.procNotFound(name);
-		return this.getParent().getProc(NAME);
+		return this.getParent().getProc(name);
 	}
 
-	public int getArgStartIndex() {
-		return variables.get(variables.size() - 1).getStackAddr() + 1;
+	public int getArgStart() {
+		return argStart;
+	}
+
+	public void setArgStart(int argStart) {
+		this.argStart = argStart;
 	}
 
 	public TokenNode getTokenNode() {
@@ -110,7 +115,6 @@ public class BlockNode implements DSTreeNode {
 
 	@Override
 	public Color DSgetColor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -118,6 +122,7 @@ public class BlockNode implements DSTreeNode {
 	public Object DSgetValue() {
 		StringBuilder builder = new StringBuilder();
 		if (NAME != null) builder.append(NAME + ", Level: " + LEVEL + ", Start: " + START_ADDR + "\n");
+		builder.append(this.argStart + "\n");
 		for (int i = 0; i < variables.size(); i++) {
 			if (variables.get(i).isConstant()) builder.append("Const ");
 			else builder.append("Var ");

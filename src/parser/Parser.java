@@ -123,10 +123,11 @@ public class Parser {
 			 * Vice prikazu v bloku - prikazy vedle sebe
 			 */
 			prikaz();
-			while(accept(Token.SEMI)) {
+			expect(Token.SEMI);
+			while(!accept(Token.END)) {
 				prikaz();
+				expect(Token.SEMI);
 			}
-			expect(Token.END);
 			break;
 		case Token.IF:
 			/*
