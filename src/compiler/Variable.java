@@ -1,15 +1,15 @@
-package parser;
+package compiler;
 
 public class Variable {
 	private final String NAME;
 	private final boolean CONSTANT;
-	private final int STACK_ADDR;
+	private final int STACK_INDEX;
 	private final int LEVEL;
 	
-	public Variable(String name, boolean constant, int stackAddr, int level) {
+	public Variable(String name, boolean constant, int stackIndex, int level) {
 		this.NAME = name;
 		this.CONSTANT = constant;
-		this.STACK_ADDR = stackAddr;
+		this.STACK_INDEX = stackIndex;
 		this.LEVEL = level;
 	}
 
@@ -21,8 +21,8 @@ public class Variable {
 		return CONSTANT;
 	}
 	
-	public int getStackAddr() {
-		return this.STACK_ADDR;
+	public int getStackIndex() {
+		return this.STACK_INDEX;
 	}
 	
 	public int getLevel() {

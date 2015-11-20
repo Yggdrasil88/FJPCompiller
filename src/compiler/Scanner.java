@@ -1,4 +1,4 @@
-package parser;
+package compiler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +13,11 @@ public class Scanner {
 	private String word;
 	private int pivot;
 
-	public List<Token> analyse(String text) {
+	public List<Token> analyse(String text) throws Exception {
 		text = text.trim();
+		if (text.equals("")) ErrorHandler.progNotFound();
+		
 		List<Token> tokens = new ArrayList<>();
-		if (text.equals("")) return tokens;
-
 		String[] words = text.split("\\s+");
 		pivot = 0;
 		word = null;
@@ -32,34 +32,30 @@ public class Scanner {
 
 	private String getNext(String[] words) {
 		String input = null;
-		try {
-			if (word == null) {
-				word = words[pivot];
-			}
+		if (word == null) {
+			word = words[pivot];
+		}
 
-			if (equals(KEYWORDS, word)) {
+		if (equals(KEYWORDS, word)) {
+			input = word;
+			word = null;
+			pivot++;
+		} else {
+			String splitter = contains(KEYWORDS_MIDDLE, word);
+			if (splitter != null) {
+				int index = word.indexOf(splitter);
+				if (index == 0) {
+					input = splitter;
+					word = word.substring(splitter.length(), word.length());
+				} else {
+					input = word.substring(0, index);
+					word = word.substring(index);
+				}
+			} else {
 				input = word;
 				word = null;
 				pivot++;
-			} else {
-				String splitter = contains(KEYWORDS_MIDDLE, word);
-				if (splitter != null) {
-					int index = word.indexOf(splitter);
-					if (index == 0) {
-						input = splitter;
-						word = word.substring(splitter.length(), word.length());
-					} else {
-						input = word.substring(0, index);
-						word = word.substring(index);
-					}
-				} else {
-					input = word;
-					word = null;
-					pivot++;
-				}	
-			}
-		} catch(Exception e) {
-			ErrorHandler.scannnerError(e);
+			}	
 		}
 		return input;
 	}

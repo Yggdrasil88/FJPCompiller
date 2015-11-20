@@ -1,4 +1,4 @@
-package parser;
+package compiler;
 
 public class PL0_Code {
 	public static final int UNAR_MINUS = 1;
@@ -44,11 +44,8 @@ public class PL0_Code {
 	}
 	
 	public static String _jpc(int addr) {
+		// V debuggeru i na portalu je chyba - spravne ma byt JPC, ale s tim nefunguje debugger
 		return "JMC 0 " + addr;
-		/*
-		 * TODO
-		 * V debuggeru i na portalu je chyba - spravne ma byt JPC, ale s tim nefunguje debugger
-		 */
 	}
 	
 	public static String _ret() {

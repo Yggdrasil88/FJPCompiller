@@ -1,4 +1,4 @@
-package parser;
+package compiler;
 
 public class Token {
 	public static final int CALL = 0;
@@ -56,21 +56,24 @@ public class Token {
 	}
 
 	public static Token createToken(String lexem, String[] tokenStrings) {
-		try {	//is number?
+		//is number?
+		try {
 			Integer.parseInt(lexem.substring(0, 1));
 			return new Token(lexem, Token.INT);
 		} catch (NumberFormatException e) {
 		}
 		
+		//is KEYWORD?
 		Token token = null;
-		String lex = lexem.toLowerCase();	//is KEYWORD?
+		String lex = lexem.toLowerCase();
 		for (int i = 0; i < tokenStrings.length; i++) {
 			if (tokenStrings[i].equals(lex)) {
 				token = new Token(lex, i);
 			}
 		}
 		
-		if (token == null) {	//is IDENT?
+		//is IDENT?
+		if (token == null) {
 			token = new Token(lex, Token.IDENT);
 		}
 		
@@ -81,10 +84,5 @@ public class Token {
 		if (this.TOKEN == Token.INT) {
 			this.lexem = "-" + this.lexem;
 		}
-	}
-	
-	@Override
-	public String toString() {
-		return "Lexem: " + this.lexem/* + ", Token: " + this.TOKEN + ";"*/;
 	}
 }

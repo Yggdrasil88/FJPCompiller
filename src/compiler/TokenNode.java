@@ -1,12 +1,9 @@
-package parser;
+package compiler;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.StructureGraphic.v1.DSTreeNode;
-
-public class TokenNode implements DSTreeNode {
+public class TokenNode {
 	private Token token;
 	private TokenNode parent;
 	private List<TokenNode> childs;
@@ -54,35 +51,6 @@ public class TokenNode implements DSTreeNode {
 	}
 	
 	public Token getToken() {
-		return this.token;
-	}
-	
-	@Override
-	public String toString() {
-		return this.token.toString();
-	}
-
-	/*
-	 * Metody pro vizualizaci
-	 * prilinkovat knihovnu z https://code.google.com/p/structure-graphic/
-	 */
-	
-	@Override
-	public DSTreeNode[] DSgetChildren() {
-		DSTreeNode[] kids = childs.toArray(new DSTreeNode[childs.size()]);
-		return kids;
-	}
-
-	@Override
-	public Color DSgetColor() {
-		if (this.token == null) return Color.RED;
-		if (this.token.getToken() == Token.INT) return Color.BLUE;
-		if (this.token.getToken() == Token.IDENT) return Color.GREEN;
-		return Color.BLACK;
-	}
-
-	@Override
-	public Object DSgetValue() {
 		return this.token;
 	}
 }

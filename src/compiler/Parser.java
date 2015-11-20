@@ -1,4 +1,4 @@
-package parser;
+package compiler;
 
 import java.util.List;
 
@@ -7,27 +7,25 @@ public class Parser {
 	private Token input;
 	private Token oldInput;
 	private int pivot;
-	private TokenNode root;
 	private TokenNode node;
 
-	public TokenNode parse(List<Token> tokens) {
+	public TokenNode parse(List<Token> tokens) throws Exception {
+		if (tokens == null || tokens.isEmpty()) ErrorHandler.progNotFound();
 		pivot = 0;
 		input = null;
 		oldInput = input;
 		inputTokens = tokens;
-		root = new TokenNode();
-		node = root;
-
+		node = new TokenNode();
 		program();
-		return root;
+		return node;
 	}
 
-	public void program() {
+	public void program() throws Exception {
 		getInput();
 		blok();
 	}
 
-	public void blok() {
+	public void blok() throws Exception {
 		if (accept(Token.CONST)) {
 			/* Vrchol const, vetve prirazeni
 			 *        const 
@@ -95,7 +93,7 @@ public class Parser {
 		node = node.getParent();
 	}
 
-	private void prikaz() {
+	private void prikaz() throws Exception {
 		Token vstup = getInput();
 		switch (vstup.getToken()) {
 		case Token.CALL:
@@ -123,10 +121,10 @@ public class Parser {
 			 * Vice prikazu v bloku - prikazy vedle sebe
 			 */
 			prikaz();
-			expect(Token.SEMI);
+			//expect(Token.SEMI);
 			while(!accept(Token.END)) {
 				prikaz();
-				expect(Token.SEMI);
+				//expect(Token.SEMI);
 			}
 			break;
 		case Token.IF:
@@ -206,9 +204,10 @@ public class Parser {
 			node = vrchol;
 			break;
 		}
+		expect(Token.SEMI);
 	}
 
-	public TokenNode podminka() {
+	public TokenNode podminka() throws Exception {
 		TokenNode podminka = null;
 		if (accept(Token.EXCL)) {
 			/*
@@ -238,7 +237,7 @@ public class Parser {
 		return podminka;
 	}
 
-	public TokenNode vyraz() {
+	public TokenNode vyraz() throws Exception {
 		TokenNode vyraz = null; 
 		if(accept(Token.QUEST)) {
 			/*
@@ -285,7 +284,7 @@ public class Parser {
 		return vyraz;
 	}
 
-	public TokenNode term() {
+	public TokenNode term() throws Exception {
 		/*
 		 * Vrchol cislo, nebo znamenko a vlevo cislo a vpravo dalsi znamenka a cisla
 		 * a * b / c =>
@@ -315,7 +314,7 @@ public class Parser {
 		return term;
 	}
 
-	public TokenNode faktor() {
+	public TokenNode faktor() throws Exception {
 		TokenNode faktor = null;
 		if (input.getToken() == Token.MINUS) {
 			/*
@@ -371,7 +370,7 @@ public class Parser {
 		return faktor;
 	}
 
-	public void oneCase() {
+	public void oneCase() throws Exception {
 		/*
 		 * Vrchol cislo, pod nim prikazy
 		 *   5
@@ -385,7 +384,7 @@ public class Parser {
 		node = node.getParent();
 	}
 
-	public void defineConst() {
+	public void defineConst() throws Exception {
 		/*
 		 * Vrchol prirazeni, vlevo ident, vpravo ident nebo hodnota
 		 * a = c = 5 =>
@@ -395,6 +394,7 @@ public class Parser {
 		 */
 		TokenNode konstanta = node;
 		Token jmenoKonstanty = getInput();
+		if (jmenoKonstanty.getToken() != Token.IDENT) ErrorHandler.notConst(jmenoKonstanty.getLexem());
 		expect(Token.ASSIGN);
 		node = node.addChild(oldInput);
 		node.addChild(jmenoKonstanty);
@@ -421,13 +421,13 @@ public class Parser {
 		return oldInput;
 	}
 
-	private boolean expect(int token) {
+	private boolean expect(int token) throws Exception {
 		if(accept(token)) return true;
 		ErrorHandler.parserError(token);
 		return false;
 	}
 
-	private boolean expect(int tokens[]) {
+	private boolean expect(int tokens[]) throws Exception {
 		if(accept(tokens)) return true;
 		ErrorHandler.parserError(tokens);
 		return false;
