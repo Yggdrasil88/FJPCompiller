@@ -348,23 +348,23 @@ public class CodeGenerator {
 		//Na vrcholu zasobniku bude vysledek
 		switch (tokenNode.getToken().getToken()) {
 		case Token.PLUS:
-			faktor(tokenNode.getChild(0));
-			faktor(tokenNode.getChild(1));
+			term(tokenNode.getChild(0));
+			term(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.PLUS));
 			break;
 		case Token.MINUS:
-			faktor(tokenNode.getChild(0));
-			faktor(tokenNode.getChild(1));
+			term(tokenNode.getChild(0));
+			term(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.MINUS));
 			break;
 		case Token.TIMES:
-			faktor(tokenNode.getChild(0));
-			faktor(tokenNode.getChild(1));
+			term(tokenNode.getChild(0));
+			term(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.TIMES));
 			break;
 		case Token.DIVIDE:
-			faktor(tokenNode.getChild(0));
-			faktor(tokenNode.getChild(1));
+			term(tokenNode.getChild(0));
+			term(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.DIVIDE));
 			break;
 		default:
@@ -387,12 +387,14 @@ public class CodeGenerator {
 			break;
 		case Token.CALL:
 			//Faktor je call
-			call(tokenNode.getChild(0));
+			level = call(tokenNode.getChild(0));
+			//Vratili jsme se z fce - zapiseme jeji navracenou hodnotu na zasobnik
+			instructions.add(PL0_Code._lod(level, 3));
 			break;
 		}
 	}
 
-	private void call(TokenNode tokenNode) throws Exception {
+	private int call(TokenNode tokenNode) throws Exception {
 		//Zjistime jmeno metody, pocet argumentu
 		String name = tokenNode.getToken().getLexem();
 		int pocetArg = tokenNode.childCount();
@@ -407,8 +409,7 @@ public class CodeGenerator {
 		}
 		//Zavolame fci
 		instructions.add(PL0_Code._cal(level, newProcNode.getStartAddr()));
-		//Vratili jsme se z fce - zapiseme jeji navracenou hodnotu na zasobnik
-		instructions.add(PL0_Code._lod(level, 3));
+		return level;
 	}
 
 	private void createProc(TokenNode newProcNode, int level) throws Exception {

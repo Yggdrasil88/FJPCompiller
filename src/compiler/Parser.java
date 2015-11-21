@@ -115,16 +115,15 @@ public class Parser {
 				expect(Token.RBRAC);
 			}
 			node = node.getParent();
+			expect(Token.SEMI);
 			break;
 		case Token.BEGIN:
 			/*
 			 * Vice prikazu v bloku - prikazy vedle sebe
 			 */
 			prikaz();
-			//expect(Token.SEMI);
 			while(!accept(Token.END)) {
 				prikaz();
-				//expect(Token.SEMI);
 			}
 			break;
 		case Token.IF:
@@ -166,6 +165,7 @@ public class Parser {
 			expect(Token.WHILE);
 			node.addChild(podminka());
 			node = node.getParent();
+			expect(Token.SEMI);
 			break;
 		case Token.SWITCH:
 			/*
@@ -202,9 +202,9 @@ public class Parser {
 			}
 			node.addChild(vyraz());
 			node = vrchol;
+			expect(Token.SEMI);
 			break;
 		}
-		expect(Token.SEMI);
 	}
 
 	public TokenNode podminka() throws Exception {
