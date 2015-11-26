@@ -47,10 +47,12 @@ public class Parser {
 			 * a b c d
 			 */
 			node = node.addChild(oldInput);
-			Token jmenoPromenne = getInput();
+			expect(Token.IDENT);
+			Token jmenoPromenne = oldInput;
 			node.addChild(jmenoPromenne);
 			while(accept(Token.COMMA)) {
-				jmenoPromenne = getInput();
+				expect(Token.IDENT);
+				jmenoPromenne = oldInput;
 				node.addChild(jmenoPromenne);
 			}
 			expect(Token.SEMI);
@@ -64,15 +66,18 @@ public class Parser {
 			 * a     b
 			 */
 			node = node.addChild(oldInput);
-			Token jmenoMetody = getInput();
+			expect(Token.IDENT);
+			Token jmenoMetody = oldInput;
 			node = node.addChild(jmenoMetody);
 			expect(Token.LBRAC);
 
 			if(!accept(Token.RBRAC)) {
-				Token argument = getInput();
+				expect(Token.IDENT);
+				Token argument = oldInput;
 				node.addChild(argument);
 				while(accept(Token.COMMA)) {
-					argument = getInput();
+					expect(Token.IDENT);
+					argument = oldInput;
 					node.addChild(argument);
 				}
 				expect(Token.RBRAC);
@@ -104,7 +109,8 @@ public class Parser {
 			 * 5  13  2
 			 */
 			node = node.addChild(vstup);
-			Token jmenoFce = getInput();
+			expect(Token.IDENT);
+			Token jmenoFce = oldInput;
 			TokenNode pom = node.addChild(jmenoFce);
 			expect(Token.LBRAC);
 			if(!accept(Token.RBRAC)) {
@@ -195,7 +201,8 @@ public class Parser {
 			node = node.addChild(oldInput);
 			node.addChild(promenna);
 			while(!accept(Token.ASSIGN)) {
-				promenna = getInput();
+				expect(Token.IDENT);
+				promenna = oldInput;
 				expect(Token.ASSIGN);
 				node = node.addChild(oldInput);
 				node.addChild(promenna);
@@ -320,8 +327,9 @@ public class Parser {
 			/*
 			 * Minus cislo
 			 */
-			getInput();
-			Token cislo = getInput();
+			expect(Token.MINUS);
+			expect(Token.INT);
+			Token cislo = oldInput;
 			cislo.minusNumber();
 			faktor = new TokenNode(cislo);
 		}
@@ -329,7 +337,8 @@ public class Parser {
 			/*
 			 * Jen cislo
 			 */
-			Token cislo = getInput();
+			expect(Token.INT);
+			Token cislo = oldInput;
 			faktor = new TokenNode(cislo);
 		} else {
 			Token vstup = getInput();
@@ -342,7 +351,8 @@ public class Parser {
 				 * 1   3
 				 */
 				faktor = new TokenNode(vstup);
-				Token jmenoFce = getInput();
+				expect(Token.IDENT);
+				Token jmenoFce = oldInput;
 				TokenNode pom = faktor.addChild(jmenoFce);
 				expect(Token.LBRAC);
 				if(!accept(Token.RBRAC)) {
@@ -377,7 +387,8 @@ public class Parser {
 		 * prikaz
 		 */
 		expect(Token.CASE);
-		Token cislo = getInput();
+		expect(Token.INT);
+		Token cislo = oldInput;
 		node = node.addChild(cislo);
 		expect(Token.COLON);
 		prikaz();
@@ -393,19 +404,21 @@ public class Parser {
 		 *     c   5
 		 */
 		TokenNode konstanta = node;
-		Token jmenoKonstanty = getInput();
+		expect(Token.IDENT);
+		Token jmenoKonstanty = oldInput;
 		if (jmenoKonstanty.getToken() != Token.IDENT) ErrorHandler.notConst(jmenoKonstanty.getLexem());
 		expect(Token.ASSIGN);
 		node = node.addChild(oldInput);
 		node.addChild(jmenoKonstanty);
 		while (!isNextNumber()) {
-			jmenoKonstanty = input;
-			getInput();
+			expect(Token.IDENT);
+			jmenoKonstanty = oldInput;
 			expect(Token.ASSIGN);
 			node = node.addChild(oldInput);
 			node.addChild(jmenoKonstanty);
 		}
-		Token cislo = getInput();
+		expect(Token.INT);
+		Token cislo = oldInput;
 		node.addChild(cislo);
 		node = konstanta;
 	}
@@ -423,13 +436,13 @@ public class Parser {
 
 	private boolean expect(int token) throws Exception {
 		if(accept(token)) return true;
-		ErrorHandler.parserError(token);
+		ErrorHandler.parserError(token, pivot);
 		return false;
 	}
 
 	private boolean expect(int tokens[]) throws Exception {
 		if(accept(tokens)) return true;
-		ErrorHandler.parserError(tokens);
+		ErrorHandler.parserError(tokens, pivot);
 		return false;
 	}
 

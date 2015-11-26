@@ -256,7 +256,7 @@ public class CodeGenerator {
 		//Vlevo promenna do ktere prirazujeme - najdeme ji v tabulce
 		Variable var = procNode.getVar(tokenNode.getChild(0).getToken().getLexem());
 		//Test na konstantu - vyhodili bychom chybu
-		if (var.isConstant()) ErrorHandler.constAssign();
+		if (var.isConstant()) ErrorHandler.constAssign(var.getName());
 		//ulozime vrchol zasobniku do promenne (na vrcholu je vysledek praveho potomka = to co prirazujeme)
 		instructions.add(PL0_Code._sto(procNode.getLevel() - var.getLevel(), var.getStackIndex()));
 		//Pokud nejsme na vrcholu, vratime hodnotu zpet na zasobnik - bude potreba o uroven vyse

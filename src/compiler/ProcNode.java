@@ -65,7 +65,7 @@ public class ProcNode {
 	}
 
 	public void addVariable(Variable var) throws Exception {
-		if (variables.contains(var)) ErrorHandler.dupliciteVariable(var);
+		if (variables.contains(var)) ErrorHandler.dupliciteVariable(var.getName());
 		else variables.add(var);
 	}
 
@@ -82,7 +82,7 @@ public class ProcNode {
 	}
 
 	public ProcNode addChild(ProcNode child) throws Exception {
-		if (childs.contains(child)) ErrorHandler.dupliciteFunction(child);
+		if (childs.contains(child)) ErrorHandler.dupliciteFunction(child.getName());
 		this.childs.add(child);
 		child.setParent(this);
 		return child;

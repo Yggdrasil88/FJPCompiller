@@ -1,45 +1,52 @@
 package compiler;
 
-import java.util.Arrays;
 
 public class ErrorHandler {
 	public static void argCountError(String name) throws Exception {
-		throw new Exception("Nesouhlasí poèet argumentù funkce " + name + ".");
+		throw new Exception("Chybny pocet argumentu funkce \"" + name + "\".");
 	}
 	
-	public static void parserError(int token) throws Exception {
-		throw new Exception("Pøi parsování vznikla chyba. \n Oèekáváno token ID " + token);
+	public static void parserError(int token, int index) throws Exception {
+		throw new Exception("Pri parsovani vznikla chyba na tokenu " + index + ". \n" +
+				"Ocekavan token \"" + Token.TOKEN_STRINGS[token] + "\".");
 	}
 	
-	public static void parserError(int[] tokens) throws Exception {
-		throw new Exception("Pøi parsování vznikla chyba. \n Oèekáváno token ID " + Arrays.toString(tokens));
+	public static void parserError(int[] tokens, int index) throws Exception {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < tokens.length; i++) {
+			sb.append("\n" + Token.TOKEN_STRINGS[tokens[i]] + "\n");
+			if (i < tokens.length - 1) sb.append(", ");
+		}
+		
+		throw new Exception("Pri parsovani vznikla chyba na tokenu " + index + ". \n" +
+				"Ocekavan jeden z tokenu: " + sb.toString() + ".");
 	}
 
-	public static void constAssign() throws Exception {
-		throw new Exception("Pøiøazujete do konstanty.");
+	public static void constAssign(String name) throws Exception {
+		throw new Exception("Nelze priradit, \"" + name + "\" je konstanta.");
 	}
 	
-	public static void dupliciteVariable(Variable var) throws Exception {
-		throw new Exception("Hodnota s nazvem " + var.getName() + " jiz existuje.");
+	public static void dupliciteVariable(String name) throws Exception {
+		throw new Exception("Hodnota s nazvem \n" + name + "\" jiz existuje.");
 	}
 	
-	public static void dupliciteFunction(ProcNode child) throws Exception {
-		throw new Exception("Funkce s nazvem " + child.getName() + " jiz existuje.");
+	public static void dupliciteFunction(String name) throws Exception {
+		throw new Exception("Funkce s nazvem \"" + name + "\" jiz existuje.");
 	}
 	
 	public static void varNotFound(String var) throws Exception {
-		throw new Exception("Promìnná s názvem " + var + " nebyla nalezena.");
+		throw new Exception("Promenna s nazvem \"" + var + "\" nebyla nalezena.");
 	}
 	
 	public static void procNotFound(String proc) throws Exception {
-		throw new Exception("Procedura s názvem " + proc + " nebyla nalezena.");
+		throw new Exception("Procedura s nazvem \"" + proc + "\" nebyla nalezena.");
 	}
 	
 	public static void notConst(String name) throws Exception {
-		throw new Exception("Oèekáváno oznaèení konstanty, na vstupu " + name + ".");
+		throw new Exception("Ocekavano oznaceni konstanty, na vstupu \"" + name + "\".");
 	}
 	
-	public static Exception progNotFound() throws Exception {
-		throw new Exception("Nenalezen žádný program.");
+	public static void progNotFound() throws Exception {
+		throw new Exception("Nenalezen zadny program.");
 	}
 }

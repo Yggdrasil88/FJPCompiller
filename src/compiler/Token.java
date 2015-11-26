@@ -39,6 +39,10 @@ public class Token {
 	public static final int IDENT = 35;
 	public static final int INT = 36;
 	
+	public static final String[] TOKEN_STRINGS = new String[] {"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
+		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "and", "or", 
+		"+", "-", "*", "/", "?", ":", "IDENT", "INT"};
+	
 	private String lexem;
 	private final int TOKEN;
 
