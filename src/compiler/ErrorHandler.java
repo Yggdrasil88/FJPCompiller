@@ -3,8 +3,8 @@ package compiler;
 import java.util.Arrays;
 
 public class ErrorHandler {
-	public static void scannnerError(Exception e) throws Exception {
-		throw new Exception("Pøi skenování vznikla chyba.");
+	public static void argCountError(String name) throws Exception {
+		throw new Exception("Nesouhlasí poèet argumentù funkce " + name + ".");
 	}
 	
 	public static void parserError(int token) throws Exception {

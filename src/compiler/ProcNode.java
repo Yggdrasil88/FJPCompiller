@@ -10,6 +10,9 @@ public class ProcNode {
 	private List<Variable> variables;
 	private final int START_ADDR;
 	private final int LEVEL;
+	//Pocet vstupnich arg
+	private int argCount;
+	//Index do zasobniku, kam budeme ukladat arg. pro volane fce.
 	private int argStartIndex;
 
 	public ProcNode(String name, int start, int level) {
@@ -45,6 +48,14 @@ public class ProcNode {
 		return this.getParent().getProc(name);
 	}
 
+	public int getArgCount() {
+		return argCount;
+	}
+
+	public void setArgCount(int argCount) {
+		this.argCount = argCount;
+	}
+	
 	public int getArgStartIndex() {
 		return argStartIndex;
 	}

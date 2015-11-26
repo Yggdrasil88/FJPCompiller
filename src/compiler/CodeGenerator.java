@@ -54,6 +54,7 @@ public class CodeGenerator {
 			//Vytvorime misto pro argumenty
 			TokenNode procArgs = tokenNode.getChild(index);
 			int pocetPromennych = procArgs.childCount();
+			procNode.setArgCount(pocetPromennych);
 			instructions.add(PL0_Code._int(pocetPromennych));
 			int argIndex = procNode.getParent().getArgStartIndex();
 			//A nastavime jim spravnou hodnotu, poznamename do tabulky
@@ -400,6 +401,8 @@ public class CodeGenerator {
 		int pocetArg = tokenNode.childCount();
 		//Najdeme metodu v nasi tabulce, zjistime o kolik urovni musime vyse a kam ulozit argumenty
 		ProcNode newProcNode = procNode.getProc(name);
+		if (pocetArg != newProcNode.getArgCount()) ErrorHandler.argCountError(name);
+		
 		int level = procNode.getLevel() - newProcNode.getLevel() + 1;
 		int index = newProcNode.getParent().getArgStartIndex();
 		//Provadime ukladani argumentu
