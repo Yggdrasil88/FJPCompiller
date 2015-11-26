@@ -16,7 +16,7 @@ public class CodeGenerator {
 		 * Zasobnik:
 		 * 	Pro kazdou proceduru:
 		 * 		prvni tri mista pro bazi - vytvorime a nevsimame si jich
-		 * 		dalsi 1 misto vyhrazeno pro navratovou hodnotu volane fce.
+		 * 		dalsi 1 misto vyhrazeno pro navratovou hodnotu volane fce. + SWITCH
 		 * 		dalsich x mist vyhrazeno pro vstupni argumenty (pri volani z fce)
 		 * 		dalsich x mist nastaveno na hodnoty konstant 
 		 * 			konstanty ukladane v ramci vicenasobneho prirazeni se ulozi jen jednou 
@@ -203,10 +203,13 @@ public class CodeGenerator {
 		case Token.SWITCH:
 			//Vytvorime pole - potrebujeme znat adresu vsech case
 			List<Integer> jmpInstructions = new ArrayList<>();
+			//Zpracujeme vyraz a ulozime ziskanou hodnotu
+			vyraz(tokenNode.getChild(0));
+			instructions.add(PL0_Code._sto(0, 3));
 			//Pro kazdy case
 			for (int i = 1; i < tokenNode.childCount(); i++) {
-				//Zpracuji vyraz (ano, pro kazdy case znovu), na zasobniku se objevi nejaka hodnota
-				vyraz(tokenNode.getChild(0));
+				//Nacteme vyraz na vrchol zasobniku
+				instructions.add(PL0_Code._lod(0, 3));
 				//Porovnani s konstantou casu
 				instructions.add(PL0_Code._lit(Integer.parseInt(tokenNode.getChild(i).getToken().getLexem())));
 				instructions.add(PL0_Code._opr(PL0_Code.EQUAL));

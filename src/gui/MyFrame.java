@@ -50,7 +50,7 @@ public final class MyFrame extends JFrame {
 		top.setBackground(Color.WHITE);
 		JPanel pom = new JPanel(new BorderLayout());
 		pom.setBackground(Color.WHITE);
-		JTextField helper = new JTextField("  Vložte program  ");
+		JTextField helper = new JTextField("  Vlozte program  ");
 		helper.setBackground(Color.WHITE);
 		helper.setFocusable(false);
 		helper.setEditable(false);
