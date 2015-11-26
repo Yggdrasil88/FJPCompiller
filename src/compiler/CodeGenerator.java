@@ -48,28 +48,34 @@ public class CodeGenerator {
 		int stackIndex = 0;
 		int index = 0;
 		stackIndex += PROC_RESERVE_SIZE;
-		instructions.add(PL0_Code._int(PROC_RESERVE_SIZE));
+		int kUlozeni = PROC_RESERVE_SIZE;
 		//jsme v procedure?
 		if (level > 0) {
 			//Vytvorime misto pro argumenty
 			TokenNode procArgs = tokenNode.getChild(index);
 			int pocetPromennych = procArgs.childCount();
 			procNode.setArgCount(pocetPromennych);
-			instructions.add(PL0_Code._int(pocetPromennych));
-			int argIndex = procNode.getParent().getArgStartIndex();
-			//A nastavime jim spravnou hodnotu, poznamename do tabulky
-			for (int i = 0; i < pocetPromennych; i++) {
-				Variable v = new Variable(procArgs.getChild(i).getToken().getLexem(), false, stackIndex, level);
-				procNode.addVariable(v);
-				instructions.add(PL0_Code._lod(1, argIndex));
-				instructions.add(PL0_Code._sto(0, stackIndex));
-				stackIndex++;
-				argIndex++;
+			if (pocetPromennych > 0) {
+				kUlozeni += pocetPromennych;
+				instructions.add(PL0_Code._int(kUlozeni));
+				kUlozeni = 0;
+				int argIndex = procNode.getParent().getArgStartIndex();
+				//A nastavime jim spravnou hodnotu, poznamename do tabulky
+				for (int i = 0; i < pocetPromennych; i++) {
+					Variable v = new Variable(procArgs.getChild(i).getToken().getLexem(), false, stackIndex, level);
+					procNode.addVariable(v);
+					instructions.add(PL0_Code._lod(1, argIndex));
+					instructions.add(PL0_Code._sto(0, stackIndex));
+					stackIndex++;
+					argIndex++;
+				}
 			}
 			index++;
 		}
 
 		if (tokenNode.getChild(index).getToken().getToken() == Token.CONST) {
+			if (kUlozeni > 0) instructions.add(PL0_Code._int(kUlozeni));
+			kUlozeni = 0;
 			//Existuji konstanty - ukladame na zacetek
 			TokenNode consts = tokenNode.getChild(index);
 			for (int i = 0; i < consts.childCount(); i++) {
@@ -84,20 +90,20 @@ public class CodeGenerator {
 			//Existuji promenne - vytvorime pro ne misto
 			TokenNode vars = tokenNode.getChild(index);
 			int pocetPromennych = vars.childCount();
+			kUlozeni += pocetPromennych;
 			for (int i = 0; i < pocetPromennych; i++) {
 				//Ukladame zaznam do tabulky
 				Variable v = new Variable(vars.getChild(i).getToken().getLexem(), false, stackIndex, level);
 				procNode.addVariable(v);
 				stackIndex++;
 			}
-			instructions.add(PL0_Code._int(pocetPromennych));
 			index++;
 		}
 
 		//Misto pro argumenty volanych fci - odtud si je budou brat
 		int maxArgumentu = 0;
 		int pomIndex = index;
-		//Projdeme vsechny fce a najdeme kolik je maximalni pocet argumentu
+		//Projdeme vsechny fce a najdeme, kolik je maximalni pocet argumentu
 		while (tokenNode.getChild(pomIndex).getToken().getToken() == Token.PROC) {
 			int pocetArg = tokenNode.getChild(pomIndex).getChild(0).childCount();
 			if (maxArgumentu < pocetArg) maxArgumentu = pocetArg;
@@ -105,10 +111,12 @@ public class CodeGenerator {
 		}
 		procNode.setArgStartIndex(stackIndex);
 		if (maxArgumentu > 0) {
-
 			//Tak velke misto pak vyhradime
-			instructions.add(PL0_Code._int(maxArgumentu));
+			kUlozeni += maxArgumentu;
 		}
+		
+		if (kUlozeni > 0) instructions.add(PL0_Code._int(kUlozeni));
+		kUlozeni = 0;
 
 		//Vytvorime skok za kod fci
 		int insJmpAddr = instructions.size();
@@ -405,7 +413,7 @@ public class CodeGenerator {
 		//Najdeme metodu v nasi tabulce, zjistime o kolik urovni musime vyse a kam ulozit argumenty
 		ProcNode newProcNode = procNode.getProc(name);
 		if (pocetArg != newProcNode.getArgCount()) ErrorHandler.argCountError(name);
-		
+
 		int level = procNode.getLevel() - newProcNode.getLevel() + 1;
 		int index = newProcNode.getParent().getArgStartIndex();
 		//Provadime ukladani argumentu
@@ -425,7 +433,7 @@ public class CodeGenerator {
 		//Prepnuti kontextu do nove fce
 		procNode = procNode.addChild(newProc);
 		tokenNode = newProcNode;
-		
+
 		//Vytvorime jeji kod
 		createBlock(level + 1);
 
