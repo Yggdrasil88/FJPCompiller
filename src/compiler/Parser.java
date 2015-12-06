@@ -387,9 +387,20 @@ public class Parser {
 		 * prikaz
 		 */
 		expect(Token.CASE);
-		expect(Token.INT);
-		Token cislo = oldInput;
-		node = node.addChild(cislo);
+		if (accept(Token.MINUS)) {
+			/*
+			 * Minus cislo
+			 */
+			expect(Token.INT);
+			Token cislo = oldInput;
+			cislo.minusNumber();
+			node = node.addChild(cislo);
+		}
+		else {
+			expect(Token.INT);
+			Token cislo = oldInput;
+			node = node.addChild(cislo);
+		}
 		expect(Token.COLON);
 		prikaz();
 		node = node.getParent();
@@ -410,16 +421,28 @@ public class Parser {
 		expect(Token.ASSIGN);
 		node = node.addChild(oldInput);
 		node.addChild(jmenoKonstanty);
-		while (!isNextNumber()) {
+		while (!isNextNumber() && input.getToken() != Token.MINUS) {
 			expect(Token.IDENT);
 			jmenoKonstanty = oldInput;
 			expect(Token.ASSIGN);
 			node = node.addChild(oldInput);
 			node.addChild(jmenoKonstanty);
 		}
-		expect(Token.INT);
-		Token cislo = oldInput;
-		node.addChild(cislo);
+
+		if (accept(Token.MINUS)) {
+			/*
+			 * Minus cislo
+			 */
+			expect(Token.INT);
+			Token cislo = oldInput;
+			cislo.minusNumber();
+			node.addChild(cislo);
+		}
+		else {
+			expect(Token.INT);
+			Token cislo = oldInput;
+			node.addChild(cislo);
+		}
 		node = konstanta;
 	}
 
