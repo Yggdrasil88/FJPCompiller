@@ -171,14 +171,20 @@ public class CodeGenerator {
 			int jpcIndex = instructions.size();
 			instructions.add(PL0_Code._jpc(-1));
 			//true - zpracujeme prikaz
-			prikaz(tokenNode.getChild(1));
+			TokenNode doToken = tokenNode.getChild(1);
+			for (int i = 0; i < doToken.childCount(); i++) {
+				prikaz(doToken.getChild(i));
+			}
 			//provedeme skok za else vetev
 			int jmpIndex = instructions.size();
 			instructions.add(PL0_Code._jmp(-1));
 			instructions.set(jpcIndex, PL0_Code._jpc(instructions.size()));
 			//existuje i else - provedeme prikaz
 			if (tokenNode.childCount() == 3) {
-				prikaz(tokenNode.getChild(2));
+				doToken = tokenNode.getChild(2);
+				for (int i = 0; i < doToken.childCount(); i++) {
+					prikaz(doToken.getChild(i));
+				}
 			}
 			instructions.set(jmpIndex, PL0_Code._jmp(instructions.size()));
 			break;
@@ -191,7 +197,10 @@ public class CodeGenerator {
 			jpcIndex = instructions.size();
 			instructions.add(PL0_Code._jpc(-1));
 			//Provadime prikaz
-			prikaz(tokenNode.getChild(1));
+			doToken = tokenNode.getChild(1);
+			for (int i = 0; i < doToken.childCount(); i++) {
+				prikaz(doToken.getChild(i));
+			}
 			//Navrat zpet na podminku
 			instructions.add(PL0_Code._jmp(whileAddr));
 			instructions.set(jpcIndex, PL0_Code._jpc(instructions.size()));
@@ -200,7 +209,10 @@ public class CodeGenerator {
 			//Zapamatujeme si zacatek
 			int doAddr = instructions.size();
 			//Provedeme prikaz
-			prikaz(tokenNode.getChild(0));
+			doToken = tokenNode.getChild(0);
+			for (int i = 0; i < doToken.childCount(); i++) {
+				prikaz(doToken.getChild(i));
+			}
 			//Zkontrolujeme znegovanou podminku
 			podminka(tokenNode.getChild(1));
 			instructions.add(PL0_Code._lit(0));
@@ -226,7 +238,10 @@ public class CodeGenerator {
 				jpcIndex = instructions.size();
 				instructions.add(PL0_Code._jpc(-1));
 				//jinak provedeme prikaz
-				prikaz(tokenNode.getChild(i).getChild(0));
+				doToken = tokenNode.getChild(i);
+				for (int j = 0; j < doToken.childCount(); j++) {
+					prikaz(doToken.getChild(j));
+				}
 				//po prikazu skocime na konec switche
 				jmpInstructions.add(instructions.size());
 				instructions.add(PL0_Code._jmp(-1));

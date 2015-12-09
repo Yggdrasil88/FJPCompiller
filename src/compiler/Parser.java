@@ -136,15 +136,20 @@ public class Parser {
 			/*
 			 * Vrchol if vlevo podminka, uprostred then, vpravo else (pokud existuje)
 			 *        if
-			 * podm  then  (else)
+			 * podm    then      (else)
+			 *        P1   P2    P3   P4
 			 * 
 			 */
 			node = node.addChild(oldInput);
 			node.addChild(podminka());
 			expect(Token.THEN);
+			node = node.addChild(oldInput);
 			prikaz();
+			node = node.getParent();
 			if(accept(Token.ELSE)) {
+				node = node.addChild(oldInput);
 				prikaz();
+				node = node.getParent();
 			}
 			node = node.getParent();
 			break;
@@ -152,22 +157,28 @@ public class Parser {
 			/*
 			 * Vrchol while, vlevo podminka, vpravo prikaz
 			 *     while
-			 * podm     prikaz
+			 * podm     DO
+			 *        P1  P2
 			 */
 			node = node.addChild(oldInput);
 			node.addChild(podminka());
 			expect(Token.DO);
+			node = node.addChild(oldInput);
 			prikaz();
+			node = node.getParent();
 			node = node.getParent();
 			break;
 		case Token.DO:
 			/*
 			 * Vrchol DO, vlevo prikaz, vpravo while
-			 *        do
-			 * prikaz    podm
+			 *         DO
+			 *     DO      podm
+			 *   P1  P2
 			 */
 			node = node.addChild(oldInput);
+			node = node.addChild(oldInput);
 			prikaz();
+			node = node.getParent();
 			expect(Token.WHILE);
 			node.addChild(podminka());
 			node = node.getParent();
