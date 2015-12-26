@@ -1,14 +1,36 @@
 package compiler;
 
 import java.util.List;
-
+/**
+ * Parser
+ */
 public class Parser {
+	/**
+	 * Input tokens
+	 */
 	private List<Token> inputTokens;
+	/**
+	 * Input
+	 */
 	private Token input;
+	/**
+	 * Old input
+	 */
 	private Token oldInput;
+	/**
+	 * Pivot
+	 */
 	private int pivot;
+	/**
+	 * Node
+	 */
 	private TokenNode node;
-
+	/**
+	 * Parse the given token list
+	 * @param tokens token list
+	 * @return token node (root)
+	 * @throws Exception exception
+	 */
 	public TokenNode parse(List<Token> tokens) throws Exception {
 		if (tokens == null || tokens.isEmpty()) ErrorHandler.progNotFound();
 		pivot = 0;
@@ -19,12 +41,15 @@ public class Parser {
 		program();
 		return node;
 	}
-
+	/**
+	 * Init
+	 * @throws Exception exception
+	 */
 	public void program() throws Exception {
 		getInput();
 		blok();
 	}
-
+	
 	public void blok() throws Exception {
 		if (accept(Token.CONST)) {
 			/* Vrchol const, vetve prirazeni
@@ -460,7 +485,7 @@ public class Parser {
 	public boolean isNextNumber() {
 		return (input.getToken() == Token.INT);
 	}
-
+	
 	public Token getInput() {
 		oldInput = input;
 		input = inputTokens.get(pivot);
@@ -479,13 +504,17 @@ public class Parser {
 		ErrorHandler.parserError(tokens, pivot);
 		return false;
 	}
-
+	
 	private boolean accept(int token) {
 		boolean result = (input.getToken() == token);
 		if (result) getInput();
 		return result;
 	}
-
+	/**
+	 * Tells if tokens are accepted
+	 * @param tokens
+	 * @return
+	 */
 	private boolean accept(int tokens[]) {
 		boolean result = false;
 		int i = 0;

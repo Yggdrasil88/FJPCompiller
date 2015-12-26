@@ -23,16 +23,30 @@ import compiler.Scanner;
 import compiler.Token;
 import compiler.TokenNode;
 
-
+/**
+ *	UI for the app
+ */
 public final class MyFrame extends JFrame {
 	private static final long serialVersionUID = -5382604565989249423L;
-
+	/**
+	 * Name of the window
+	 */
 	private final static String NAME = "PL/0 Gen.";
-	
+	/**
+	 * Area for input
+	 */
 	private JTextArea input;
+	/**
+	 * Area for output
+	 */
 	private JTextArea output;
+	/**
+	 * Confirm button
+	 */
 	private JButton button;
-	
+	/**
+	 * Constructor
+	 */
 	public MyFrame() {
 		super(NAME);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -42,7 +56,9 @@ public final class MyFrame extends JFrame {
 		
 		this.setVisible(true);
 	}
-
+	/**
+	 * Method for creating UI layout
+	 */
 	private void createPanels() {
 		this.setLayout(new BorderLayout());	
 		JPanel top = new JPanel(new GridLayout(1, 2));
@@ -90,7 +106,9 @@ public final class MyFrame extends JFrame {
 		});
 		this.add(bottom, BorderLayout.SOUTH);
 	}
-	
+	/**
+	 * Method for compiling input code.
+	 */
 	private void compile() {
 		String programText = input.getText();
 		try {

@@ -2,15 +2,32 @@ package compiler;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Class for generating code
+ */
 public class CodeGenerator {
-	//Baze + navr. hodnota
+	/**
+	 * Base and return value
+	 */
 	private final int PROC_RESERVE_SIZE = 4;
-
+	/**
+	 * Current token node
+	 */
 	private TokenNode tokenNode;
+	/**
+	 * Functions root (main)
+	 */
 	private ProcNode procNode;
+	/**
+	 * List of instructions
+	 */
 	private List<String> instructions;
-
+	/**
+	 * Initialization
+	 * @param root root token node
+	 * @return list initialized list of instructions
+	 * @throws Exception exception
+	 */
 	public List<String> generate(TokenNode root) throws Exception {
 		/*
 		 * Zasobnik:
@@ -43,7 +60,11 @@ public class CodeGenerator {
 
 		return instructions;
 	}
-
+	/**
+	 * Creates a block with given level (makes space)
+	 * @param level level
+	 * @throws Exception exception
+	 */
 	private void createBlock(int level) throws Exception {
 		int stackIndex = 0;
 		int index = 0;
@@ -156,7 +177,11 @@ public class CodeGenerator {
 		//return za misto volani
 		instructions.add(PL0_Code._ret());
 	}
-
+	/**
+	 * Adds command instruction 
+	 * @param tokenNode current token node
+	 * @throws Exception exception
+	 */
 	private void prikaz(TokenNode tokenNode) throws Exception {
 		//Zjistime typ uzlu a zavolame potrebnou metodu
 		switch(tokenNode.getToken().getToken()) {
@@ -257,7 +282,12 @@ public class CodeGenerator {
 			assign(tokenNode, 0);
 		}
 	}
-
+	/**
+	 * Adds assign instructions
+	 * @param tokenNode current token node
+	 * @param lev level of assign
+	 * @throws Exception exception
+	 */
 	private void assign(TokenNode tokenNode, int lev) throws Exception {
 		//Je pravy potomek vyraz?
 		if (tokenNode.getChild(1).getToken().getToken() != Token.ASSIGN) {
@@ -277,7 +307,11 @@ public class CodeGenerator {
 		//Pokud nejsme na vrcholu, vratime hodnotu zpet na zasobnik - bude potreba o uroven vyse
 		if (lev > 0) instructions.add(PL0_Code._lod(procNode.getLevel() - var.getLevel(), var.getStackIndex()));
 	}
-
+	/**
+	 * Adds instruction of conditions 
+	 * @param tokenNode current token node
+	 * @throws Exception exception
+	 */
 	private void podminka(TokenNode tokenNode) throws Exception {
 		//Na vrcholu zasobniku zbude: 0 false, 1 true; jpc (jmc) skace pri false
 		switch (tokenNode.getToken().getToken()) {
@@ -347,7 +381,11 @@ public class CodeGenerator {
 			break;
 		}
 	}
-
+	/**
+	 * Adds expresion instructions 
+	 * @param tokenNode current token node
+	 * @throws Exception exception
+	 */
 	private void vyraz(TokenNode tokenNode) throws Exception {
 		if (tokenNode.getToken().getToken() == Token.QUEST) {
 			//Podminene prirazeni - zkusime podminku, na zasobniku bude vysledek
@@ -370,7 +408,11 @@ public class CodeGenerator {
 			term(tokenNode);
 		}
 	}
-
+	/**
+	 * Adds term instructions
+	 * @param tokenNode current token node
+	 * @throws Exception ecception
+	 */
 	private void term(TokenNode tokenNode) throws Exception {
 		//Na vrcholu zasobniku bude vysledek
 		switch (tokenNode.getToken().getToken()) {
@@ -398,7 +440,11 @@ public class CodeGenerator {
 			faktor(tokenNode);
 		}
 	}
-
+	/**
+	 * Adds factor instructions
+	 * @param tokenNode current token node
+	 * @throws Exception exception
+	 */
 	private void faktor(TokenNode tokenNode) throws Exception {
 		//Na vrcholu zasobniku zbude vysledek
 		switch (tokenNode.getToken().getToken()) {
@@ -420,7 +466,12 @@ public class CodeGenerator {
 			break;
 		}
 	}
-
+	/**
+	 * Function call
+	 * @param tokenNode current token node
+	 * @return level of call
+	 * @throws Exception exception
+	 */
 	private int call(TokenNode tokenNode) throws Exception {
 		//Zjistime jmeno metody, pocet argumentu
 		String name = tokenNode.getToken().getLexem();
@@ -440,7 +491,12 @@ public class CodeGenerator {
 		instructions.add(PL0_Code._cal(level, newProcNode.getStartAddr()));
 		return level;
 	}
-
+	/**
+	 * Creates new function
+	 * @param newProcNode new tokens to add
+	 * @param level level
+	 * @throws Exception exception
+	 */
 	private void createProc(TokenNode newProcNode, int level) throws Exception {
 		//Vytvarime novou fci - zadame info o ni do nasi tabulky (stromu)
 		ProcNode newProc = new ProcNode(newProcNode.getChild(0).getToken().getLexem(), 
@@ -456,11 +512,20 @@ public class CodeGenerator {
 		tokenNode = tokenNode.getParent();
 		procNode = procNode.getParent();
 	}
-
+	/**
+	 * Creates new constant
+	 * @param tokenNode current token node
+	 * @param stackIndex stack index
+	 * @param level level 
+	 * @return value
+	 * @throws Exception exception
+	 */
 	private int createConst(TokenNode tokenNode, int stackIndex, int level) throws Exception {
 		//Rekurzivne vytvarime zaznam do tabulky (stromu)
 		//Pokud jsme v liste parsujeme hodnotu a vracime zpet
-		if (tokenNode.childCount() == 0) return Integer.parseInt(tokenNode.getToken().getLexem());
+		if (tokenNode.childCount() == 0) {
+			return Integer.parseInt(tokenNode.getToken().getLexem());
+		}
 		//Ziskavame hodnotu rekurzivnim volanim na praveho potomka
 		int hodnota = createConst(tokenNode.getChild(1), stackIndex, level);
 		//Podle navracene hodnoty vytvorime konstantu a pridame do tabulky
