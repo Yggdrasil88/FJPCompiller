@@ -126,4 +126,11 @@ public final class MyFrame extends JFrame {
 			output.setText(e.getMessage());
 		}
 	}
+	/**
+	 * Sets text to input
+	 * @param text text to set
+	 */
+	public void setInputText(String text){
+		this.input.setText(text);
+	}
 }

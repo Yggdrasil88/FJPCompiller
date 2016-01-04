@@ -49,7 +49,10 @@ public class Parser {
 		getInput();
 		blok();
 	}
-	
+	/**
+	 * Assumes next is a definition of a block and tries to parse it.
+	 * @throws Exception
+	 */
 	public void blok() throws Exception {
 		if (accept(Token.CONST)) {
 			/* Vrchol const, vetve prirazeni
@@ -122,7 +125,10 @@ public class Parser {
 		}
 		node = node.getParent();
 	}
-
+	/**
+	 * Assumes next is definition of command and tries to parse it.
+	 * @throws Exception exception
+	 */
 	private void prikaz() throws Exception {
 		Token vstup = getInput();
 		switch (vstup.getToken()) {
@@ -249,7 +255,11 @@ public class Parser {
 			break;
 		}
 	}
-
+	/**
+	 * Assumes next is definition of condition and tries to parse it.
+	 * @return token node
+	 * @throws Exception exception
+	 */
 	public TokenNode podminka() throws Exception {
 		TokenNode podminka = null;
 		if (accept(Token.EXCL)) {
@@ -279,7 +289,11 @@ public class Parser {
 		}
 		return podminka;
 	}
-
+	/**
+	 * Assumes next is definition of expression and tries to parse it.
+	 * @return token node
+	 * @throws Exception exception
+	 */
 	public TokenNode vyraz() throws Exception {
 		TokenNode vyraz = null; 
 		if(accept(Token.QUEST)) {
@@ -326,7 +340,11 @@ public class Parser {
 		}
 		return vyraz;
 	}
-
+	/**
+	 * Assumes next is term and tries to parse it.
+	 * @return token node
+	 * @throws Exception exception
+	 */
 	public TokenNode term() throws Exception {
 		/*
 		 * Vrchol cislo, nebo znamenko a vlevo cislo a vpravo dalsi znamenka a cisla
@@ -356,7 +374,11 @@ public class Parser {
 		term = vrchol;
 		return term;
 	}
-
+	/**
+	 * Assumes next is definition of a factor and tries to parse it.
+	 * @return token node
+	 * @throws Exception exception
+	 */
 	public TokenNode faktor() throws Exception {
 		TokenNode faktor = null;
 		if (input.getToken() == Token.MINUS) {
@@ -415,7 +437,10 @@ public class Parser {
 		}
 		return faktor;
 	}
-
+	/**
+	 * Assumes next is definition of switch and tries to parse it.
+	 * @throws Exception exception
+	 */
 	public void oneCase() throws Exception {
 		/*
 		 * Vrchol cislo, pod nim prikazy
@@ -441,7 +466,10 @@ public class Parser {
 		prikaz();
 		node = node.getParent();
 	}
-
+	/**
+	 * Assumes next is definition of constant and tries to parse it.
+	 * @throws Exception Exception
+	 */
 	public void defineConst() throws Exception {
 		/*
 		 * Vrchol prirazeni, vlevo ident, vpravo ident nebo hodnota
@@ -481,39 +509,60 @@ public class Parser {
 		}
 		node = konstanta;
 	}
-
+	/**
+	 * Tells if next is a number
+	 * @return is number
+	 */
 	public boolean isNextNumber() {
 		return (input.getToken() == Token.INT);
 	}
-	
+	/**
+	 * Gets next token
+	 * @return next token to parse
+	 */
 	public Token getInput() {
 		oldInput = input;
 		input = inputTokens.get(pivot);
 		if (pivot < inputTokens.size() - 1) pivot++;
 		return oldInput;
 	}
-
+	
+	/**
+	 * Given token is expected in input
+	 * @param token expected token
+	 * @return correctly expected
+	 * @throws Exception exception
+	 */
 	private boolean expect(int token) throws Exception {
 		if(accept(token)) return true;
 		ErrorHandler.parserError(token, pivot);
 		return false;
 	}
-
+	/**
+	 * given tokens are expected in input
+	 * @param tokens expected tokens
+	 * @return correctly expected
+	 * @throws Exception exception
+	 */
 	private boolean expect(int tokens[]) throws Exception {
 		if(accept(tokens)) return true;
 		ErrorHandler.parserError(tokens, pivot);
 		return false;
 	}
-	
+	/**
+	 * Tells if input token is correct
+	 * @param token expected token
+	 * @return correctly expected
+	 */
 	private boolean accept(int token) {
 		boolean result = (input.getToken() == token);
 		if (result) getInput();
 		return result;
 	}
 	/**
-	 * Tells if tokens are accepted
-	 * @param tokens
-	 * @return
+	 * Tells if input token are correct
+	 * @param tokens expected tokens
+	 * @return correctly expected
 	 */
 	private boolean accept(int tokens[]) {
 		boolean result = false;
