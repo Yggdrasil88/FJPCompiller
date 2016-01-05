@@ -2,7 +2,7 @@ package compiler;
 
 import java.util.List;
 /**
- * Parser
+ * Class for generating syntax tree
  */
 public class Parser {
 	/**
@@ -10,30 +10,30 @@ public class Parser {
 	 */
 	private List<Token> inputTokens;
 	/**
-	 * Input
+	 * Newly loaded token
 	 */
 	private Token input;
 	/**
-	 * Old input
+	 * Last token
 	 */
 	private Token oldInput;
 	/**
-	 * Pivot
+	 * Index to token array
 	 */
-	private int pivot;
+	private int tokenIndex;
 	/**
-	 * Node
+	 * Actually creating syntax tree node
 	 */
 	private TokenNode node;
 	/**
 	 * Parse the given token list
 	 * @param tokens token list
 	 * @return token node (root)
-	 * @throws Exception exception
+	 * @throws Exception Syntax error
 	 */
 	public TokenNode parse(List<Token> tokens) throws Exception {
 		if (tokens == null || tokens.isEmpty()) ErrorHandler.progNotFound();
-		pivot = 0;
+		tokenIndex = 0;
 		input = null;
 		oldInput = input;
 		inputTokens = tokens;
@@ -42,18 +42,19 @@ public class Parser {
 		return node;
 	}
 	/**
-	 * Init
-	 * @throws Exception exception
+	 * Input point of program
+	 * @throws Exception Syntax error
 	 */
 	public void program() throws Exception {
 		getInput();
-		blok();
+		block();
 	}
+
 	/**
-	 * Assumes next is a definition of a block and tries to parse it.
-	 * @throws Exception
+	 * Parsing "block" part of program
+	 * @throws Exception Syntax error
 	 */
-	public void blok() throws Exception {
+	public void block() throws Exception {
 		if (accept(Token.CONST)) {
 			/* Vrchol const, vetve prirazeni
 			 *        const 
@@ -76,12 +77,12 @@ public class Parser {
 			 */
 			node = node.addChild(oldInput);
 			expect(Token.IDENT);
-			Token jmenoPromenne = oldInput;
-			node.addChild(jmenoPromenne);
+			Token varName = oldInput;
+			node.addChild(varName);
 			while(accept(Token.COMMA)) {
 				expect(Token.IDENT);
-				jmenoPromenne = oldInput;
-				node.addChild(jmenoPromenne);
+				varName = oldInput;
+				node.addChild(varName);
 			}
 			expect(Token.SEMI);
 			node = node.getParent();
@@ -95,8 +96,8 @@ public class Parser {
 			 */
 			node = node.addChild(oldInput);
 			expect(Token.IDENT);
-			Token jmenoMetody = oldInput;
-			node = node.addChild(jmenoMetody);
+			Token funcName = oldInput;
+			node = node.addChild(funcName);
 			expect(Token.LBRAC);
 
 			if(!accept(Token.RBRAC)) {
@@ -111,27 +112,28 @@ public class Parser {
 				expect(Token.RBRAC);
 			}
 			node = node.getParent();
-			blok();
+			block();
 			node = node.getParent();
 		}
 		if (!accept(Token.RETURN)) {
-			prikaz();
+			statement();
 			expect(Token.RETURN);
 		}
 		node = node.addChild(oldInput);
 		if(!accept(Token.SEMI)) {
-			node.addChild(vyraz());
+			node.addChild(expression());
 			expect(Token.SEMI);
 		}
 		node = node.getParent();
 	}
+
 	/**
-	 * Assumes next is definition of command and tries to parse it.
-	 * @throws Exception exception
+	 * Parsing "statement" part of program
+	 * @throws Exception Syntax error
 	 */
-	private void prikaz() throws Exception {
-		Token vstup = getInput();
-		switch (vstup.getToken()) {
+	private void statement() throws Exception {
+		Token input = getInput();
+		switch (input.getToken()) {
 		case Token.CALL:
 			/*
 			 * Vrchol call, pod nim jmeno fce, pod nim argumenty
@@ -139,15 +141,15 @@ public class Parser {
 			 *   fce  
 			 * 5  13  2
 			 */
-			node = node.addChild(vstup);
+			node = node.addChild(input);
 			expect(Token.IDENT);
-			Token jmenoFce = oldInput;
-			TokenNode pom = node.addChild(jmenoFce);
+			Token funcName = oldInput;
+			TokenNode hlp = node.addChild(funcName);
 			expect(Token.LBRAC);
 			if(!accept(Token.RBRAC)) {
-				pom.addChild(vyraz());
+				hlp.addChild(expression());
 				while(accept(Token.COMMA)) {
-					pom.addChild(vyraz());
+					hlp.addChild(expression());
 				}
 				expect(Token.RBRAC);
 			}
@@ -158,9 +160,9 @@ public class Parser {
 			/*
 			 * Vice prikazu v bloku - prikazy vedle sebe
 			 */
-			prikaz();
+			statement();
 			while(!accept(Token.END)) {
-				prikaz();
+				statement();
 			}
 			break;
 		case Token.IF:
@@ -172,14 +174,14 @@ public class Parser {
 			 * 
 			 */
 			node = node.addChild(oldInput);
-			node.addChild(podminka());
+			node.addChild(condition());
 			expect(Token.THEN);
 			node = node.addChild(oldInput);
-			prikaz();
+			statement();
 			node = node.getParent();
 			if(accept(Token.ELSE)) {
 				node = node.addChild(oldInput);
-				prikaz();
+				statement();
 				node = node.getParent();
 			}
 			node = node.getParent();
@@ -192,10 +194,10 @@ public class Parser {
 			 *        P1  P2
 			 */
 			node = node.addChild(oldInput);
-			node.addChild(podminka());
+			node.addChild(condition());
 			expect(Token.DO);
 			node = node.addChild(oldInput);
-			prikaz();
+			statement();
 			node = node.getParent();
 			node = node.getParent();
 			break;
@@ -208,10 +210,10 @@ public class Parser {
 			 */
 			node = node.addChild(oldInput);
 			node = node.addChild(oldInput);
-			prikaz();
+			statement();
 			node = node.getParent();
 			expect(Token.WHILE);
-			node.addChild(podminka());
+			node.addChild(condition());
 			node = node.getParent();
 			expect(Token.SEMI);
 			break;
@@ -223,7 +225,7 @@ public class Parser {
 			 *     prik   prik
 			 */
 			node = node.addChild(oldInput);
-			node.addChild(vyraz());
+			node.addChild(expression());
 			oneCase();
 			while(accept(Token.COMMA)) {
 				oneCase();
@@ -237,40 +239,42 @@ public class Parser {
 			 * a     =       d   9
 			 *     c   3
 			 */
-			Token promenna = oldInput;
-			TokenNode vrchol = node;
+			Token var = oldInput;
+			TokenNode root = node;
 			expect(Token.ASSIGN);
 			node = node.addChild(oldInput);
-			node.addChild(promenna);
-			while(!accept(Token.ASSIGN)) {
+			node.addChild(var);
+			while (tokenIndex + 1 <= inputTokens.size() && inputTokens.get(tokenIndex).getToken() == Token.ASSIGN) {
 				expect(Token.IDENT);
-				promenna = oldInput;
+				var = oldInput;
 				expect(Token.ASSIGN);
 				node = node.addChild(oldInput);
-				node.addChild(promenna);
+				node.addChild(var);
 			}
-			node.addChild(vyraz());
-			node = vrchol;
+			
+			node.addChild(expression());
+			node = root;
 			expect(Token.SEMI);
 			break;
 		}
 	}
+
 	/**
-	 * Assumes next is definition of condition and tries to parse it.
-	 * @return token node
-	 * @throws Exception exception
+	 * Parsing "condition" part of program
+	 * @return Newly created token node
+	 * @throws Exception Syntax error
 	 */
-	public TokenNode podminka() throws Exception {
-		TokenNode podminka = null;
+	public TokenNode condition() throws Exception {
+		TokenNode condition = null;
 		if (accept(Token.EXCL)) {
 			/*
 			 * Vrchol vykricnik, pod nim podminka
 			 *  !
 			 * pom()
 			 */
-			podminka = new TokenNode(oldInput);
+			condition = new TokenNode(oldInput);
 			expect(Token.LBRAC);
-			podminka.addChild(podminka());
+			condition.addChild(condition());
 			expect(Token.RBRAC);
 		} else {
 			/*
@@ -279,36 +283,37 @@ public class Parser {
 			 * a   >
 			 *   b   c
 			 */
-			TokenNode leva = vyraz();
+			TokenNode left = expression();
 			int array[] = new int[] {Token.EQUAL, Token.DIFF, Token.LT, Token.GT, Token.LET, Token.GET, Token.AND, Token.OR};
 			expect(array);
-			podminka = new TokenNode(oldInput);
-			TokenNode prava = vyraz();
-			podminka.addChild(leva);
-			podminka.addChild(prava);
+			condition = new TokenNode(oldInput);
+			TokenNode right = expression();
+			condition.addChild(left);
+			condition.addChild(right);
 		}
-		return podminka;
+		return condition;
 	}
+
 	/**
-	 * Assumes next is definition of expression and tries to parse it.
-	 * @return token node
-	 * @throws Exception exception
+	 * Parsing "expression" part of program
+	 * @return Newly created token node
+	 * @throws Exception Syntax error
 	 */
-	public TokenNode vyraz() throws Exception {
-		TokenNode vyraz = null; 
+	public TokenNode expression() throws Exception {
+		TokenNode expression = null; 
 		if(accept(Token.QUEST)) {
 			/*
 			 * Vrchol otaznik, vlevo true, vpravo false
 			 *        ?
 			 * a > b  3   5
 			 */
-			TokenNode podm = podminka();
+			TokenNode cond = condition();
 			expect(Token.QUEST);
-			vyraz = new TokenNode(oldInput);
-			vyraz.addChild(podm);
-			vyraz.addChild(vyraz());
+			expression = new TokenNode(oldInput);
+			expression.addChild(cond);
+			expression.addChild(expression());
 			expect(Token.COLON);
-			vyraz.addChild(vyraz());
+			expression.addChild(expression());
 		} 
 		else {
 			/*
@@ -319,31 +324,32 @@ public class Parser {
 			 *       term1       -
 			 *             term2   term3
 			 */
-			TokenNode vrchol = null;
-			TokenNode leva = term();
+			TokenNode root = null;
+			TokenNode left = term();
 			int array[] = new int[] {Token.PLUS, Token.MINUS};
 			while(accept(array)) {
-				if(vyraz == null) {
-					vyraz = new TokenNode(oldInput);
-					vrchol = vyraz;
+				if(expression == null) {
+					expression = new TokenNode(oldInput);
+					root = expression;
 				}
-				else vyraz = vyraz.addChild(oldInput);
-				vyraz.addChild(leva);
-				leva = term();
+				else expression = expression.addChild(oldInput);
+				expression.addChild(left);
+				left = term();
 			}
-			if(vyraz == null) {
-				vyraz = leva;
-				vrchol = vyraz;
+			if(expression == null) {
+				expression = left;
+				root = expression;
 			}
-			else vyraz.addChild(leva);
-			vyraz = vrchol;
+			else expression.addChild(left);
+			expression = root;
 		}
-		return vyraz;
+		return expression;
 	}
+
 	/**
-	 * Assumes next is term and tries to parse it.
-	 * @return token node
-	 * @throws Exception exception
+	 * Parsing "term" part of program
+	 * @return Newly created token node
+	 * @throws Exception Syntax error
 	 */
 	public TokenNode term() throws Exception {
 		/*
@@ -353,54 +359,55 @@ public class Parser {
 		 * a     /
 		 *     b   c
 		 */
-		TokenNode vrchol = null;
+		TokenNode root = null;
 		TokenNode term = null;
-		TokenNode leva = faktor();
+		TokenNode left = factor();
 		int array[] = new int[] {Token.TIMES, Token.DIVIDE};
 		while(accept(array)) {
 			if(term == null) {
 				term = new TokenNode(oldInput);
-				vrchol = term;
+				root = term;
 			}
 			else term = term.addChild(oldInput);
-			term.addChild(leva);
-			leva = faktor();
+			term.addChild(left);
+			left = factor();
 		}
 		if(term == null) {
-			term = leva;
-			vrchol = term;
+			term = left;
+			root = term;
 		}
-		else term.addChild(leva);
-		term = vrchol;
+		else term.addChild(left);
+		term = root;
 		return term;
 	}
+
 	/**
-	 * Assumes next is definition of a factor and tries to parse it.
-	 * @return token node
-	 * @throws Exception exception
+	 * Parsing "factor" part of program
+	 * @return Newly created token node
+	 * @throws Exception Syntax error
 	 */
-	public TokenNode faktor() throws Exception {
-		TokenNode faktor = null;
+	public TokenNode factor() throws Exception {
+		TokenNode factor = null;
 		if (input.getToken() == Token.MINUS) {
 			/*
 			 * Minus cislo
 			 */
 			expect(Token.MINUS);
 			expect(Token.INT);
-			Token cislo = oldInput;
-			cislo.minusNumber();
-			faktor = new TokenNode(cislo);
+			Token number = oldInput;
+			number.minusNumber();
+			factor = new TokenNode(number);
 		}
 		else if (isNextNumber()) {
 			/*
 			 * Jen cislo
 			 */
 			expect(Token.INT);
-			Token cislo = oldInput;
-			faktor = new TokenNode(cislo);
+			Token number = oldInput;
+			factor = new TokenNode(number);
 		} else {
-			Token vstup = getInput();
-			switch (vstup.getToken()) {
+			Token input = getInput();
+			switch (input.getToken()) {
 			case Token.CALL: 
 				/*
 				 * Vrchol Call, pod nim jmeno fce, pod nim argumenty
@@ -408,15 +415,15 @@ public class Parser {
 				 *  fce
 				 * 1   3
 				 */
-				faktor = new TokenNode(vstup);
+				factor = new TokenNode(input);
 				expect(Token.IDENT);
-				Token jmenoFce = oldInput;
-				TokenNode pom = faktor.addChild(jmenoFce);
+				Token funcName = oldInput;
+				TokenNode hlp = factor.addChild(funcName);
 				expect(Token.LBRAC);
 				if(!accept(Token.RBRAC)) {
-					pom.addChild(vyraz());
+					hlp.addChild(expression());
 					while(accept(Token.COMMA)) {
-						pom.addChild(vyraz());
+						hlp.addChild(expression());
 					}
 					expect(Token.RBRAC);
 				}
@@ -425,21 +432,22 @@ public class Parser {
 				/*
 				 * Vracime vyraz
 				 */
-				faktor = vyraz();
+				factor = expression();
 				expect(Token.RBRAC);
 				break;
 			default:
 				/*
 				 * Vracime jmeno promenne
 				 */
-				faktor = new TokenNode(vstup);
+				factor = new TokenNode(input);
 			}
 		}
-		return faktor;
+		return factor;
 	}
+
 	/**
-	 * Assumes next is definition of switch and tries to parse it.
-	 * @throws Exception exception
+	 * Parsing one case of switch statement
+	 * @throws Exception Syntax error
 	 */
 	public void oneCase() throws Exception {
 		/*
@@ -453,22 +461,23 @@ public class Parser {
 			 * Minus cislo
 			 */
 			expect(Token.INT);
-			Token cislo = oldInput;
-			cislo.minusNumber();
-			node = node.addChild(cislo);
+			Token number = oldInput;
+			number.minusNumber();
+			node = node.addChild(number);
 		}
 		else {
 			expect(Token.INT);
-			Token cislo = oldInput;
-			node = node.addChild(cislo);
+			Token number = oldInput;
+			node = node.addChild(number);
 		}
 		expect(Token.COLON);
-		prikaz();
+		statement();
 		node = node.getParent();
 	}
+
 	/**
-	 * Assumes next is definition of constant and tries to parse it.
-	 * @throws Exception Exception
+	 * Parsing constant statement
+	 * @throws Exception Syntax error
 	 */
 	public void defineConst() throws Exception {
 		/*
@@ -478,19 +487,19 @@ public class Parser {
 		 * a     =
 		 *     c   5
 		 */
-		TokenNode konstanta = node;
+		TokenNode constant = node;
 		expect(Token.IDENT);
-		Token jmenoKonstanty = oldInput;
-		if (jmenoKonstanty.getToken() != Token.IDENT) ErrorHandler.notConst(jmenoKonstanty.getLexem());
+		Token constName = oldInput;
+		if (constName.getToken() != Token.IDENT) ErrorHandler.notConst(constName.getLexem());
 		expect(Token.ASSIGN);
 		node = node.addChild(oldInput);
-		node.addChild(jmenoKonstanty);
+		node.addChild(constName);
 		while (!isNextNumber() && input.getToken() != Token.MINUS) {
 			expect(Token.IDENT);
-			jmenoKonstanty = oldInput;
+			constName = oldInput;
 			expect(Token.ASSIGN);
 			node = node.addChild(oldInput);
-			node.addChild(jmenoKonstanty);
+			node.addChild(constName);
 		}
 
 		if (accept(Token.MINUS)) {
@@ -498,61 +507,65 @@ public class Parser {
 			 * Minus cislo
 			 */
 			expect(Token.INT);
-			Token cislo = oldInput;
-			cislo.minusNumber();
-			node.addChild(cislo);
+			Token number = oldInput;
+			number.minusNumber();
+			node.addChild(number);
 		}
 		else {
 			expect(Token.INT);
-			Token cislo = oldInput;
-			node.addChild(cislo);
+			Token number = oldInput;
+			node.addChild(number);
 		}
-		node = konstanta;
+		node = constant;
 	}
+
 	/**
-	 * Tells if next is a number
-	 * @return is number
+	 * Check if new token is number
+	 * @return True if new token is number
 	 */
 	public boolean isNextNumber() {
 		return (input.getToken() == Token.INT);
 	}
+
 	/**
-	 * Gets next token
-	 * @return next token to parse
+	 * Read new token from token list
+	 * @return Old input
 	 */
 	public Token getInput() {
 		oldInput = input;
-		input = inputTokens.get(pivot);
-		if (pivot < inputTokens.size() - 1) pivot++;
+		input = inputTokens.get(tokenIndex);
+		if (tokenIndex < inputTokens.size() - 1) tokenIndex++;
 		return oldInput;
 	}
 	
 	/**
-	 * Given token is expected in input
-	 * @param token expected token
-	 * @return correctly expected
-	 * @throws Exception exception
+	 * Check if actual token equals expected token, read new token
+	 * @param token Expected token
+	 * @return True if equal
+	 * @throws Exception Exception if token not equal
 	 */
 	private boolean expect(int token) throws Exception {
 		if(accept(token)) return true;
-		ErrorHandler.parserError(token, pivot);
+		ErrorHandler.parserError(token, tokenIndex);
 		return false;
 	}
+
 	/**
-	 * given tokens are expected in input
-	 * @param tokens expected tokens
-	 * @return correctly expected
-	 * @throws Exception exception
+	 * Check if actual token equals one of expected tokens, read new token
+	 * @param tokens Expected token
+	 * @return True if equal
+	 * @throws Exception Exception if token not equal
 	 */
 	private boolean expect(int tokens[]) throws Exception {
 		if(accept(tokens)) return true;
-		ErrorHandler.parserError(tokens, pivot);
+		ErrorHandler.parserError(tokens, tokenIndex);
 		return false;
 	}
+
 	/**
-	 * Tells if input token is correct
-	 * @param token expected token
-	 * @return correctly expected
+	 * Check if actual token equals tested token, if so, read new token
+	 * @param token Tested token
+	 * @return True if equal
 	 */
 	private boolean accept(int token) {
 		boolean result = (input.getToken() == token);
@@ -560,9 +573,9 @@ public class Parser {
 		return result;
 	}
 	/**
-	 * Tells if input token are correct
-	 * @param tokens expected tokens
-	 * @return correctly expected
+	 * Check if actual token equals one of tested tokens, if so, read new token
+	 * @param tokens Tested tokens
+	 * @return True if equal
 	 */
 	private boolean accept(int tokens[]) {
 		boolean result = false;

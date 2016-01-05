@@ -6,7 +6,6 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -17,11 +16,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 
-import compiler.CodeGenerator;
-import compiler.Parser;
-import compiler.Scanner;
-import compiler.Token;
-import compiler.TokenNode;
+import compiler.PL0_Compiler;
 
 /**
  *	UI for the app
@@ -31,7 +26,7 @@ public final class MyFrame extends JFrame {
 	/**
 	 * Name of the window
 	 */
-	private final static String NAME = "PL/0 Gen.";
+	private final static String NAME = "PL/0 Compiler";
 	/**
 	 * Area for input
 	 */
@@ -64,32 +59,32 @@ public final class MyFrame extends JFrame {
 		JPanel top = new JPanel(new GridLayout(1, 2));
 		
 		top.setBackground(Color.WHITE);
-		JPanel pom = new JPanel(new BorderLayout());
-		pom.setBackground(Color.WHITE);
-		JTextField helper = new JTextField("  Vlozte program  ");
+		JPanel hlp = new JPanel(new BorderLayout());
+		hlp.setBackground(Color.WHITE);
+		JTextField helper = new JTextField("  Insert program:  ");
 		helper.setBackground(Color.WHITE);
 		helper.setFocusable(false);
 		helper.setEditable(false);
-		pom.add(helper, BorderLayout.NORTH);
+		hlp.add(helper, BorderLayout.NORTH);
 		input = new JTextArea();
 		input.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		JScrollPane scroller = new JScrollPane(input);
-		pom.add(scroller, BorderLayout.CENTER);
-		top.add(pom);
+		hlp.add(scroller, BorderLayout.CENTER);
+		top.add(hlp);
 		
-		pom = new JPanel(new BorderLayout());
-		pom.setBackground(Color.WHITE);
-		helper = new JTextField("  Instrukce:  ");
+		hlp = new JPanel(new BorderLayout());
+		hlp.setBackground(Color.WHITE);
+		helper = new JTextField("  Instructions:  ");
 		helper.setBackground(Color.WHITE);
 		helper.setFocusable(false);
 		helper.setEditable(false);
-		pom.add(helper, BorderLayout.NORTH);
+		hlp.add(helper, BorderLayout.NORTH);
 		output = new JTextArea();
 		output.setEditable(false);
 		output.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		scroller = new JScrollPane(output);
-		pom.add(scroller, BorderLayout.CENTER);
-		top.add(pom);
+		hlp.add(scroller, BorderLayout.CENTER);
+		top.add(hlp);
 		this.add(top, BorderLayout.CENTER);
 		
 		
@@ -107,30 +102,17 @@ public final class MyFrame extends JFrame {
 		this.add(bottom, BorderLayout.SOUTH);
 	}
 	/**
-	 * Method for compiling input code.
+	 * Method for getting PL/0 code
 	 */
 	private void compile() {
 		String programText = input.getText();
 		try {
-			List<Token> tokens = new Scanner().analyse(programText);
-			TokenNode node = new Parser().parse(tokens);
-			List<String> instructions = new CodeGenerator().generate(node);
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < instructions.size(); i++) {
-				builder.append(i + " " + instructions.get(i) + "\n");
-			}
 			output.setForeground(Color.BLUE);
-			output.setText(builder.toString());
-		} catch (Exception e) {
+			output.setText(PL0_Compiler.compile(programText));
+		}
+		catch (Exception e) {
 			output.setForeground(Color.RED);
 			output.setText(e.getMessage());
 		}
-	}
-	/**
-	 * Sets text to input
-	 * @param text text to set
-	 */
-	public void setInputText(String text){
-		this.input.setText(text);
 	}
 }

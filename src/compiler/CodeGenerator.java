@@ -69,20 +69,20 @@ public class CodeGenerator {
 		int stackIndex = 0;
 		int index = 0;
 		stackIndex += PROC_RESERVE_SIZE;
-		int kUlozeni = PROC_RESERVE_SIZE;
+		int toSave = PROC_RESERVE_SIZE;
 		//jsme v procedure?
 		if (level > 0) {
 			//Vytvorime misto pro argumenty
 			TokenNode procArgs = tokenNode.getChild(index);
-			int pocetPromennych = procArgs.childCount();
-			procNode.setArgCount(pocetPromennych);
-			if (pocetPromennych > 0) {
-				kUlozeni += pocetPromennych;
-				instructions.add(PL0_Code._int(kUlozeni));
-				kUlozeni = 0;
+			int argCount = procArgs.childCount();
+			procNode.setArgCount(argCount);
+			if (argCount > 0) {
+				toSave += argCount;
+				instructions.add(PL0_Code._int(toSave));
+				toSave = 0;
 				int argIndex = procNode.getParent().getArgStartIndex();
 				//A nastavime jim spravnou hodnotu, poznamename do tabulky
-				for (int i = 0; i < pocetPromennych; i++) {
+				for (int i = 0; i < argCount; i++) {
 					Variable v = new Variable(procArgs.getChild(i).getToken().getLexem(), false, stackIndex, level);
 					procNode.addVariable(v);
 					instructions.add(PL0_Code._lod(1, argIndex));
@@ -95,49 +95,51 @@ public class CodeGenerator {
 		}
 
 		if (tokenNode.getChild(index).getToken().getToken() == Token.CONST) {
-			if (kUlozeni > 0) instructions.add(PL0_Code._int(kUlozeni));
-			kUlozeni = 0;
+			if (toSave > 0) instructions.add(PL0_Code._int(toSave));
+			toSave = 0;
 			//Existuji konstanty - ukladame na zacetek
 			TokenNode consts = tokenNode.getChild(index);
 			for (int i = 0; i < consts.childCount(); i++) {
 				//Pro kazdou mnozinu konstant poznamename konstanty do tabulky, vytvarime jen jednu
-				int hodnota = createConst(consts.getChild(i), stackIndex, level);
-				instructions.add(PL0_Code._lit(hodnota));
+				int value = createConst(consts.getChild(i), stackIndex, level);
+				instructions.add(PL0_Code._lit(value));
 				stackIndex++;
 			}
 			index++;
 		}
 		if (tokenNode.getChild(index).getToken().getToken() == Token.VAR) {
+			if (toSave > 0) instructions.add(PL0_Code._int(toSave));
+			toSave = 0;
 			//Existuji promenne - vytvorime pro ne misto
 			TokenNode vars = tokenNode.getChild(index);
-			int pocetPromennych = vars.childCount();
-			kUlozeni += pocetPromennych;
-			for (int i = 0; i < pocetPromennych; i++) {
+			int argCount = vars.childCount();
+			for (int i = 0; i < argCount; i++) {
 				//Ukladame zaznam do tabulky
 				Variable v = new Variable(vars.getChild(i).getToken().getLexem(), false, stackIndex, level);
 				procNode.addVariable(v);
+				instructions.add(PL0_Code._lit(0));
 				stackIndex++;
 			}
 			index++;
 		}
 
 		//Misto pro argumenty volanych fci - odtud si je budou brat
-		int maxArgumentu = 0;
-		int pomIndex = index;
+		int maxArgs = 0;
+		int hlpIndex = index;
 		//Projdeme vsechny fce a najdeme, kolik je maximalni pocet argumentu
-		while (tokenNode.getChild(pomIndex).getToken().getToken() == Token.PROC) {
-			int pocetArg = tokenNode.getChild(pomIndex).getChild(0).childCount();
-			if (maxArgumentu < pocetArg) maxArgumentu = pocetArg;
-			pomIndex++;
+		while (tokenNode.getChild(hlpIndex).getToken().getToken() == Token.PROC) {
+			int argCount = tokenNode.getChild(hlpIndex).getChild(0).childCount();
+			if (maxArgs < argCount) maxArgs = argCount;
+			hlpIndex++;
 		}
 		procNode.setArgStartIndex(stackIndex);
-		if (maxArgumentu > 0) {
+		if (maxArgs > 0) {
 			//Tak velke misto pak vyhradime
-			kUlozeni += maxArgumentu;
+			toSave += maxArgs;
 		}
 		
-		if (kUlozeni > 0) instructions.add(PL0_Code._int(kUlozeni));
-		kUlozeni = 0;
+		if (toSave > 0) instructions.add(PL0_Code._int(toSave));
+		toSave = 0;
 
 		//Vytvorime skok za kod fci
 		int insJmpAddr = instructions.size();
@@ -160,7 +162,7 @@ public class CodeGenerator {
 
 		//Zpracovavame prikazy dokud nenarazime na return
 		while (tokenNode.getChild(index).getToken().getToken() != Token.RETURN) {
-			prikaz(tokenNode.getChild(index));
+			command(tokenNode.getChild(index));
 			index++;
 		}
 
@@ -168,7 +170,7 @@ public class CodeGenerator {
 		if(tokenNode.getParent() != null) {
 			//Zjistime co vratit, jinak vracime nulu
 			if (tokenNode.getChild(index).childCount() != 0) {
-				vyraz(tokenNode.getChild(index).getChild(0));
+				expression(tokenNode.getChild(index).getChild(0));
 			} else {
 				instructions.add(PL0_Code._lit(0));
 			}
@@ -182,7 +184,7 @@ public class CodeGenerator {
 	 * @param tokenNode current token node
 	 * @throws Exception exception
 	 */
-	private void prikaz(TokenNode tokenNode) throws Exception {
+	private void command(TokenNode tokenNode) throws Exception {
 		//Zjistime typ uzlu a zavolame potrebnou metodu
 		switch(tokenNode.getToken().getToken()) {
 		case Token.CALL:
@@ -191,14 +193,14 @@ public class CodeGenerator {
 			break;
 		case Token.IF:
 			//zkontrolujeme podminku
-			podminka(tokenNode.getChild(0));
+			condition(tokenNode.getChild(0));
 			//provedeme skok pri false na else vetev
 			int jpcIndex = instructions.size();
 			instructions.add(PL0_Code._jpc(-1));
 			//true - zpracujeme prikaz
 			TokenNode doToken = tokenNode.getChild(1);
 			for (int i = 0; i < doToken.childCount(); i++) {
-				prikaz(doToken.getChild(i));
+				command(doToken.getChild(i));
 			}
 			//provedeme skok za else vetev
 			int jmpIndex = instructions.size();
@@ -208,7 +210,7 @@ public class CodeGenerator {
 			if (tokenNode.childCount() == 3) {
 				doToken = tokenNode.getChild(2);
 				for (int i = 0; i < doToken.childCount(); i++) {
-					prikaz(doToken.getChild(i));
+					command(doToken.getChild(i));
 				}
 			}
 			instructions.set(jmpIndex, PL0_Code._jmp(instructions.size()));
@@ -217,14 +219,14 @@ public class CodeGenerator {
 			//zapamatujeme si kde zacina
 			int whileAddr = instructions.size();
 			//zpracovani podminky
-			podminka(tokenNode.getChild(0));
+			condition(tokenNode.getChild(0));
 			//skok pri false za while
 			jpcIndex = instructions.size();
 			instructions.add(PL0_Code._jpc(-1));
 			//Provadime prikaz
 			doToken = tokenNode.getChild(1);
 			for (int i = 0; i < doToken.childCount(); i++) {
-				prikaz(doToken.getChild(i));
+				command(doToken.getChild(i));
 			}
 			//Navrat zpet na podminku
 			instructions.add(PL0_Code._jmp(whileAddr));
@@ -236,10 +238,10 @@ public class CodeGenerator {
 			//Provedeme prikaz
 			doToken = tokenNode.getChild(0);
 			for (int i = 0; i < doToken.childCount(); i++) {
-				prikaz(doToken.getChild(i));
+				command(doToken.getChild(i));
 			}
 			//Zkontrolujeme znegovanou podminku
-			podminka(tokenNode.getChild(1));
+			condition(tokenNode.getChild(1));
 			instructions.add(PL0_Code._lit(0));
 			instructions.add(PL0_Code._opr(PL0_Code.EQUAL));
 			//Pri true skocime zpet na do
@@ -249,7 +251,7 @@ public class CodeGenerator {
 			//Vytvorime pole - potrebujeme znat adresu vsech case
 			List<Integer> jmpInstructions = new ArrayList<>();
 			//Zpracujeme vyraz a ulozime ziskanou hodnotu
-			vyraz(tokenNode.getChild(0));
+			expression(tokenNode.getChild(0));
 			instructions.add(PL0_Code._sto(0, 3));
 			//Pro kazdy case
 			for (int i = 1; i < tokenNode.childCount(); i++) {
@@ -265,7 +267,7 @@ public class CodeGenerator {
 				//jinak provedeme prikaz
 				doToken = tokenNode.getChild(i);
 				for (int j = 0; j < doToken.childCount(); j++) {
-					prikaz(doToken.getChild(j));
+					command(doToken.getChild(j));
 				}
 				//po prikazu skocime na konec switche
 				jmpInstructions.add(instructions.size());
@@ -292,7 +294,7 @@ public class CodeGenerator {
 		//Je pravy potomek vyraz?
 		if (tokenNode.getChild(1).getToken().getToken() != Token.ASSIGN) {
 			//Pokud ano, vyhodnotime
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(1));
 		}
 		else {
 			//Jinak se do nej zanorime
@@ -312,46 +314,46 @@ public class CodeGenerator {
 	 * @param tokenNode current token node
 	 * @throws Exception exception
 	 */
-	private void podminka(TokenNode tokenNode) throws Exception {
+	private void condition(TokenNode tokenNode) throws Exception {
 		//Na vrcholu zasobniku zbude: 0 false, 1 true; jpc (jmc) skace pri false
 		switch (tokenNode.getToken().getToken()) {
 		case Token.EQUAL:
-			vyraz(tokenNode.getChild(0));
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(0));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.EQUAL));
 			break;
 		case Token.DIFF:
-			vyraz(tokenNode.getChild(0));
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(0));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
 			break;
 		case Token.LT:
-			vyraz(tokenNode.getChild(0));
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(0));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.LT));
 			break;
 		case Token.GT:
-			vyraz(tokenNode.getChild(0));
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(0));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.GT));
 			break;
 		case Token.LET:
-			vyraz(tokenNode.getChild(0));
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(0));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.LET));
 			break;
 		case Token.GET:
-			vyraz(tokenNode.getChild(0));
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(0));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._opr(PL0_Code.GET));
 			break;
 		case Token.AND:
 			//Zpracujeme vyraz a upravime na 0 pri nule, jinak na 1
-			vyraz(tokenNode.getChild(0));
+			expression(tokenNode.getChild(0));
 			instructions.add(PL0_Code._lit(0));
 			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
 			//Zpracujeme vyraz a upravime na 0 pri nule, jinak na 1
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._lit(0));
 			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
 			//Na true musi byt oba 1 => soucet >= 2
@@ -361,11 +363,11 @@ public class CodeGenerator {
 			break;
 		case Token.OR:
 			//Zpracujeme vyraz a upravime na 0 pri nule, jinak na 1
-			vyraz(tokenNode.getChild(0));
+			expression(tokenNode.getChild(0));
 			instructions.add(PL0_Code._lit(0));
 			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
 			//Zpracujeme vyraz a upravime na 0 pri nule, jinak na 1
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(1));
 			instructions.add(PL0_Code._lit(0));
 			instructions.add(PL0_Code._opr(PL0_Code.DIFF));
 			//Na true musi byt alespon jeden 1 => soucet >= 1
@@ -375,7 +377,7 @@ public class CodeGenerator {
 			break;
 		case Token.EXCL: 
 			//Provedeme podminku a znegujeme
-			podminka(tokenNode.getChild(0));
+			condition(tokenNode.getChild(0));
 			instructions.add(PL0_Code._lit(0));
 			instructions.add(PL0_Code._opr(PL0_Code.EQUAL));
 			break;
@@ -386,25 +388,25 @@ public class CodeGenerator {
 	 * @param tokenNode current token node
 	 * @throws Exception exception
 	 */
-	private void vyraz(TokenNode tokenNode) throws Exception {
+	private void expression(TokenNode tokenNode) throws Exception {
 		if (tokenNode.getToken().getToken() == Token.QUEST) {
 			//Podminene prirazeni - zkusime podminku, na zasobniku bude vysledek
-			podminka(tokenNode.getChild(0));
+			condition(tokenNode.getChild(0));
 			//Pripravime skok za 1. moznost pri false
 			int jpcIndex = instructions.size();
 			instructions.add(PL0_Code._jpc(-1));
 			//Provadime 1. moznost
-			vyraz(tokenNode.getChild(1));
+			expression(tokenNode.getChild(1));
 			//Pridame skok na konec prirazeni
 			int jmpIndex = instructions.size();
 			instructions.add(PL0_Code._jmp(-1));
 			//Zacina druhy vyraz - upravime skok na nej
 			instructions.set(jpcIndex, PL0_Code._jpc(instructions.size()));
-			vyraz(tokenNode.getChild(2));
+			expression(tokenNode.getChild(2));
 			//konci 2. vyraz, upravime skok za nej
 			instructions.set(jmpIndex, PL0_Code._jmp(instructions.size()));
 		} else {
-			//Zpracovavame term - ny vrcholu zasobniku zbude vysledek
+			//Zpracovavame term - na vrcholu zasobniku zbude vysledek
 			term(tokenNode);
 		}
 	}
@@ -437,7 +439,7 @@ public class CodeGenerator {
 			instructions.add(PL0_Code._opr(PL0_Code.DIVIDE));
 			break;
 		default:
-			faktor(tokenNode);
+			factor(tokenNode);
 		}
 	}
 	/**
@@ -445,7 +447,7 @@ public class CodeGenerator {
 	 * @param tokenNode current token node
 	 * @throws Exception exception
 	 */
-	private void faktor(TokenNode tokenNode) throws Exception {
+	private void factor(TokenNode tokenNode) throws Exception {
 		//Na vrcholu zasobniku zbude vysledek
 		switch (tokenNode.getToken().getToken()) {
 		case Token.IDENT:
@@ -475,16 +477,16 @@ public class CodeGenerator {
 	private int call(TokenNode tokenNode) throws Exception {
 		//Zjistime jmeno metody, pocet argumentu
 		String name = tokenNode.getToken().getLexem();
-		int pocetArg = tokenNode.childCount();
+		int argCount = tokenNode.childCount();
 		//Najdeme metodu v nasi tabulce, zjistime o kolik urovni musime vyse a kam ulozit argumenty
 		ProcNode newProcNode = procNode.getProc(name);
-		if (pocetArg != newProcNode.getArgCount()) ErrorHandler.argCountError(name);
+		if (argCount != newProcNode.getArgCount()) ErrorHandler.argCountError(name);
 
 		int level = procNode.getLevel() - newProcNode.getLevel() + 1;
 		int index = newProcNode.getParent().getArgStartIndex();
 		//Provadime ukladani argumentu
-		for(int i = 0; i < pocetArg; i++) {
-			vyraz(tokenNode.getChild(i));
+		for(int i = 0; i < argCount; i++) {
+			expression(tokenNode.getChild(i));
 			instructions.add(PL0_Code._sto(level, index + i));
 		}
 		//Zavolame fci
@@ -527,10 +529,10 @@ public class CodeGenerator {
 			return Integer.parseInt(tokenNode.getToken().getLexem());
 		}
 		//Ziskavame hodnotu rekurzivnim volanim na praveho potomka
-		int hodnota = createConst(tokenNode.getChild(1), stackIndex, level);
+		int value = createConst(tokenNode.getChild(1), stackIndex, level);
 		//Podle navracene hodnoty vytvorime konstantu a pridame do tabulky
 		Variable v = new Variable(tokenNode.getChild(0).getToken().getLexem(), true, stackIndex, level);
 		procNode.addVariable(v);
-		return hodnota;
+		return value;
 	}
 }

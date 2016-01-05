@@ -153,7 +153,9 @@ public class Token {
 	 */
 	public static final int INT = 36;
 	
-	
+	/**
+	 * Array with all possible tokens
+	 */
 	public static final String[] TOKEN_STRINGS = new String[] {"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
 		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "and", "or", 
 		"+", "-", "*", "/", "?", ":", "IDENT", "INT"};
@@ -219,7 +221,7 @@ public class Token {
 		return token;
 	}
 	/**
-	 * Inverts positive int.
+	 * Inverts positive int
 	 */
 	public void minusNumber() {
 		if (this.TOKEN == Token.INT) {

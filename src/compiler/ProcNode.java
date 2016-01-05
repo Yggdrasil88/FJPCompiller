@@ -40,7 +40,7 @@ public class ProcNode {
 	private int argStartIndex;
 	/**
 	 * Constructor
-	 * @param name name of fucntion
+	 * @param name name of function
 	 * @param start starting address
 	 * @param level level
 	 */

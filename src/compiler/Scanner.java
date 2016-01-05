@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class Scanner {
 	/**
-	 * Array with keywords
+	 * Array with stand-alone keywords
 	 */
 	private static final String KEYWORDS[] = new String[]{"call", "return", "begin", "end", "if", "else", "then", "while", "do", 
 		"switch", "case", "procedure", "const", "var", "(", ")", "!", ".", ",", ";", "=", "==", "<>", "<", ">", "<=", ">=", "and", "or", 
