@@ -86,7 +86,7 @@ public class TokenNode {
 	}
 	/**
 	 * Gets parent of this node
-	 * @return
+	 * @return Parent node
 	 */
 	public TokenNode getParent() {
 		return this.parent;

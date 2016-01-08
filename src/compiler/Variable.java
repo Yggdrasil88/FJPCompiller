@@ -55,7 +55,7 @@ public class Variable {
 	}
 	/**
 	 * Level of variable
-	 * @return
+	 * @return Level of this level
 	 */
 	public int getLevel() {
 		return this.LEVEL;
