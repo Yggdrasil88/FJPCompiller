@@ -1,0 +1,9 @@
+var x;
+procedure pridej(p)
+  return p + 1;
+begin
+  x = 1;
+  x = call pridej(x);
+  if x == 2 then x = -1;
+end
+return;

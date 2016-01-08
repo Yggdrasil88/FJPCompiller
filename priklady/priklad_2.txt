@@ -1,0 +1,13 @@
+const a = b = 1, c = 2;
+var d;
+
+procedure vynasob(a, b) 
+  return a * b;
+  
+procedure umocni(a) 
+  return call vynasob(a, a);
+
+begin
+  d = call vynasob(a, c) - call umocni(b);
+end
+return;

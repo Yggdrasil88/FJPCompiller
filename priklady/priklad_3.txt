@@ -1,0 +1,19 @@
+const a = 3;
+var b, c;
+
+procedure sniz(a)
+  return a - 1;
+  
+begin
+  b = a * 2;
+  while b > 2
+  do 
+    begin
+      switch b
+        case 1: c = 100;,
+        case 2: c = 50;,
+        case 3: c = 10;
+      b = call sniz(b);
+    end
+end
+return;

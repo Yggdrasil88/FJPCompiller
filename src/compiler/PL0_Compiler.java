@@ -40,7 +40,7 @@ public class PL0_Compiler {
 			StringBuilder text = new StringBuilder();
 			String hlp = br.readLine();
 			while(hlp != null) {
-				text.append(hlp);
+				text.append(hlp + " ");
 				hlp = br.readLine();
 			}
 			br.close();
