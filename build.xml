@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="PL0_Compiler" default="preklad" basedir=".">
+	<property name="souborSMain" value="Main"/>
+	<property name="distribucniJAR" value="PL0_Compiler"/>
+	
+	<property name="kodovaniZdroje" value="windows-1250"/>
+	<property name="zdrojove" value="src"/>
+	<property name="prelozene" value="bin"/>
+	<property name="dokumentace" value="doc"/>
+	
+	<target name="preklad" >
+    <mkdir dir="${prelozene}"/>
+		<javac srcdir="${zdrojove}" destdir="${prelozene}" debug="on" includeantruntime="false"/>
+		<jar destfile="PL0_Compiler.jar" basedir="${prelozene}">
+			<manifest>
+				<attribute name="Main-Class" value="gui.Main"/>
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="dokumentace" >
+    <mkdir dir="${dokumentace}"/>
+		<javadoc sourcepath="${zdrojove}" destdir="${dokumentace}" private="true" >
+			<fileset dir="${zdrojove}" includes="**/*.java" />
+		</javadoc>
+	</target>
+</project>
